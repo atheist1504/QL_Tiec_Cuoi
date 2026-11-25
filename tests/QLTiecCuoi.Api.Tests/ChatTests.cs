@@ -177,7 +177,18 @@ public class ChatTests : IDisposable
         Assert.Equal("Đã giữ Sảnh Hoàng Gia đến hết 48 giờ.", after.Text);
         var booking = Assert.Single(db.Bookings);
         Assert.Equal(2, booking.HallId);
-        Assert.Contains("booking_id", Assert.Single(model.ToolResults).Result);
+        var result = Assert.Single(model.ToolResults).Result;
+        Assert.Contains("booking_id", result);
+        Assert.Contains("\"hold_expires_at_local\":\"09:00 03/12/2026\"", result); // đồng hồ giả lập ở múi UTC: 01/12 09:00 + 48 giờ
+    }
+
+    [Fact]
+    public async Task Chat_WriteToolWithoutText_GetsDefaultPrompt()
+    {
+        using var db = NewDb();
+        var model = new FakeChatModel(FakeChatModel.Tool("t1", "hold_hall", HoldInput));
+        var reply = await Chat(db, model, new()).SendAsync(new ChatRequest(null, "Giữ sảnh"));
+        Assert.Contains("xác nhận", reply.Text);
     }
 
     [Fact]
@@ -282,7 +293,7 @@ public class ChatTests : IDisposable
         var (req, body) = handler.Requests[1];
         Assert.Equal("https://generativelanguage.googleapis.com/v1beta/openai/chat/completions", req.RequestUri!.ToString());
         Assert.Equal("Bearer test-key", req.Headers.Authorization!.ToString());
-        Assert.Equal("gemini-3.6-flash", body["model"]!.GetValue<string>());
+        Assert.Equal(OpenAiCompatibleChatModel.GeminiDefaultModel, body["model"]!.GetValue<string>());
         var messages = body["messages"]!.AsArray();
         Assert.Equal(["system", "user", "assistant", "tool"], messages.Select(m => m!["role"]!.GetValue<string>()));
         Assert.Equal("sig-123", messages[2]!["extra_content"]!["google"]!["thought_signature"]!.GetValue<string>()); // gửi lại nguyên văn

@@ -10,10 +10,12 @@ namespace QLTiecCuoi.Api.Services.Chat;
 /// Kết nối các dịch vụ có API chuẩn OpenAI Chat Completions: Gemini (mặc định), Groq, OpenRouter, Ollama...
 /// Gọi thẳng bằng HttpClient, không cần thư viện riêng.
 /// </summary>
-public class OpenAiCompatibleChatModel(HttpClient http, ChatOptions options, string? apiKey, string providerName) : IChatModel
+public class OpenAiCompatibleChatModel(HttpClient http, ChatOptions options, string? apiKey, string providerName,
+    Microsoft.Extensions.Logging.ILogger? logger = null) : IChatModel
 {
     public const string GeminiBaseUrl = "https://generativelanguage.googleapis.com/v1beta/openai/";
-    public const string GeminiDefaultModel = "gemini-3.6-flash";
+    // Flash-Lite: nhanh, ít bị quá tải ở gói miễn phí (đo thực tế 26/11/2026: ~8 giây/câu, model Flash thường bị 503).
+    public const string GeminiDefaultModel = "gemini-3.5-flash-lite";
 
     public bool IsConfigured => !string.IsNullOrWhiteSpace(apiKey) || options.AllowNoApiKey;
     public string DisplayName => $"{providerName} ({Model})";
@@ -120,7 +122,27 @@ public class OpenAiCompatibleChatModel(HttpClient http, ChatOptions options, str
         return new JsonObject { ["type"] = "function", ["function"] = fn };
     }
 
+    /// <summary>Gửi yêu cầu; dịch vụ báo quá tải (503) thì đợi rồi thử lại tối đa 2 lần.</summary>
     private async Task<JsonNode> PostAsync(JsonObject body)
+    {
+        int[] delaysMs = [2000, 5000];
+        for (var attempt = 0; ; attempt++)
+        {
+            try
+            {
+                return await PostOnceAsync(body);
+            }
+            catch (OverloadedException) when (attempt < delaysMs.Length)
+            {
+                logger?.LogInformation("{Provider}: quá tải, thử lại sau {Ms} ms", providerName, delaysMs[attempt]);
+                await Task.Delay(delaysMs[attempt]);
+            }
+        }
+    }
+
+    private sealed class OverloadedException(string message) : ChatModelException(message);
+
+    private async Task<JsonNode> PostOnceAsync(JsonObject body)
     {
         using var req = new HttpRequestMessage(HttpMethod.Post, BaseUrl + "chat/completions")
         {
@@ -128,23 +150,36 @@ public class OpenAiCompatibleChatModel(HttpClient http, ChatOptions options, str
         };
         if (!string.IsNullOrWhiteSpace(apiKey)) req.Headers.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
 
+        var count = body["messages"]?.AsArray().Count ?? 0;
+        var sw = System.Diagnostics.Stopwatch.StartNew();
         HttpResponseMessage res;
         try
         {
             res = await http.SendAsync(req);
         }
-        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException)
+        catch (TaskCanceledException)
         {
+            logger?.LogWarning("{Provider}: quá thời gian chờ sau {Ms} ms ({Count} tin nhắn)", providerName, sw.ElapsedMilliseconds, count);
+            throw new ChatModelException($"{providerName} phản hồi quá lâu (quá {http.Timeout.TotalSeconds:0} giây). Thử lại hoặc hỏi ngắn gọn hơn.");
+        }
+        catch (HttpRequestException ex)
+        {
+            logger?.LogWarning("{Provider}: lỗi kết nối {Error}", providerName, ex.Message);
             throw new ChatModelException($"Không kết nối được {providerName}. Kiểm tra mạng rồi thử lại.");
         }
 
         using (res)
         {
             var raw = await res.Content.ReadAsStringAsync();
+            logger?.LogInformation("{Provider}: HTTP {Status} sau {Ms} ms ({Count} tin nhắn gửi đi)",
+                providerName, (int)res.StatusCode, sw.ElapsedMilliseconds, count);
             if (res.IsSuccessStatusCode)
                 return JsonNode.Parse(raw) ?? throw new ChatModelException($"{providerName} trả về dữ liệu rỗng.");
 
             var detail = TryErrorMessage(raw);
+            if (res.StatusCode == HttpStatusCode.ServiceUnavailable)
+                throw new OverloadedException(
+                    $"{providerName} đang quá tải (model \"{Model}\"). Thử lại sau ít phút hoặc đổi model trong cấu hình Chat:Model.");
             throw new ChatModelException(res.StatusCode switch
             {
                 HttpStatusCode.TooManyRequests =>

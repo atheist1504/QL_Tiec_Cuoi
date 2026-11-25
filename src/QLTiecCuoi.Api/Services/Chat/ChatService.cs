@@ -177,6 +177,7 @@ public class ChatService(IChatModel model, ChatTools tools, ChatConversationStor
                 conv.Pending = calls;
                 var actions = new List<ChatPendingActionDto>();
                 foreach (var w in writes) actions.Add(await tools.DescribeAsync(w.Request.Name, w.Request.Input!));
+                if (texts.Count == 0) texts.Add("Mình đề xuất thao tác bên dưới, bạn kiểm tra rồi bấm xác nhận giúp nhé.");
                 return Reply(conv, texts, toolsUsed, actions);
             }
 

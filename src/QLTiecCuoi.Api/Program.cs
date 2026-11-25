@@ -27,12 +27,15 @@ builder.Services.AddScoped<ReportService>();
 var chatOptions = builder.Configuration.GetSection("Chat").Get<ChatOptions>() ?? new ChatOptions();
 builder.Services.AddSingleton(chatOptions);
 builder.Services.AddSingleton<ChatConversationStore>();
-builder.Services.AddSingleton<IChatModel>(_ =>
+builder.Services.AddSingleton<IChatModel>(sp =>
 {
+    var chatLogger = sp.GetRequiredService<ILoggerFactory>().CreateLogger("Chat");
     string? Key(string configKey, string envVar)
     {
         var k = builder.Configuration[configKey];
-        return string.IsNullOrWhiteSpace(k) ? Environment.GetEnvironmentVariable(envVar) : k;
+        if (string.IsNullOrWhiteSpace(k)) k = Environment.GetEnvironmentVariable(envVar);
+        // Bỏ ký tự thừa hay gõ nhầm khi chép key từ hướng dẫn: dấu cách, ngoặc kép, dấu < >.
+        return k?.Trim().Trim('"', '\'', '<', '>', ' ');
     }
     switch (chatOptions.Provider.Trim().ToLowerInvariant())
     {
@@ -42,10 +45,10 @@ builder.Services.AddSingleton<IChatModel>(_ =>
             return new ClaudeChatModel(new AnthropicClient { ApiKey = configured ? claudeKey : "chua-cau-hinh" }, chatOptions, configured);
         case "openaicompatible":
             return new OpenAiCompatibleChatModel(new HttpClient { Timeout = TimeSpan.FromSeconds(90) }, chatOptions,
-                Key("Chat:ApiKey", "CHAT_API_KEY"), "Dịch vụ AI");
+                Key("Chat:ApiKey", "CHAT_API_KEY"), "Dịch vụ AI", chatLogger);
         default: // Gemini
             return new OpenAiCompatibleChatModel(new HttpClient { Timeout = TimeSpan.FromSeconds(90) }, chatOptions,
-                Key("Gemini:ApiKey", "GEMINI_API_KEY"), "Gemini");
+                Key("Gemini:ApiKey", "GEMINI_API_KEY"), "Gemini", chatLogger);
     }
 });
 builder.Services.AddScoped<ChatTools>();

@@ -62,7 +62,7 @@ Chatbot chạy trên back-end API, dùng tool calling. Nhà cung cấp LLM chọ
 
 | Provider | Kết nối | Key (user-secrets / biến môi trường) | Model mặc định |
 | --- | --- | --- | --- |
-| `Gemini` (mặc định) | API chuẩn OpenAI của Google, gọi bằng HttpClient | `Gemini:ApiKey` / `GEMINI_API_KEY` | `gemini-3.6-flash` |
+| `Gemini` (mặc định) | API chuẩn OpenAI của Google, gọi bằng HttpClient | `Gemini:ApiKey` / `GEMINI_API_KEY` | `gemini-3.5-flash-lite` |
 | `Claude` | SDK chính thức `Anthropic` (Messages API) | `Anthropic:ApiKey` / `ANTHROPIC_API_KEY` | `claude-opus-5-5` |
 | `OpenAICompatible` | Bất kỳ dịch vụ chuẩn OpenAI (Groq, OpenRouter, Ollama...), đặt thêm `Chat:BaseUrl` | `Chat:ApiKey` / `CHAT_API_KEY` | đặt `Chat:Model` |
 
@@ -80,6 +80,9 @@ dotnet user-secrets set "Gemini:ApiKey" "<api key của bạn>" --project src/QL
 3. Khởi động lại API, mở app, bấm **Trợ lý AI**.
 
 Lưu ý gói miễn phí: giới hạn số lượt theo phút và theo ngày (xem https://aistudio.google.com/rate-limit); hết lượt thì chatbot báo "Đã hết lượt gọi…", đợi rồi thử lại.
+Model hay bị quá tải (HTTP 503) vào giờ cao điểm; API tự thử lại 2 lần. Đo ngày 26/11/2026 với câu hỏi báo giá:
+`gemini-3.5-flash-lite` khoảng 8 giây, không lỗi; `gemini-4-hydrogen` khoảng 33 giây vì bị 503 hai lần; `gemini-3.6-flash` quá tải liên tục.
+Chatbot đặt `Effort` = `low` vì việc tra cứu không cần suy nghĩ sâu, và mọi con số đều do API nghiệp vụ tính.
 Theo điều khoản, dữ liệu gửi qua gói miễn phí có thể được Google dùng để cải thiện sản phẩm, nên chỉ dùng dữ liệu mẫu, không đưa dữ liệu khách thật.
 Nếu tên model không còn hỗ trợ, sửa `Chat:Model` theo danh sách ở https://aistudio.google.com/docs/models.
 

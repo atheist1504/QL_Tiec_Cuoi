@@ -196,7 +196,11 @@ public class ChatTools(BookingService bookings, CatalogService catalog, QuoteSer
     {
         var b = await bookings.HoldAsync(new HoldRequest(GetInt(input, "hall_id"), GetDate(input, "date"), GetShift(input, "shift"),
             GetString(input, "customer_name"), GetString(input, "customer_phone"), GetInt(input, "expected_tables"), "Tạo qua chatbot"));
-        return new { booking_id = b.Id, hall = b.HallName, date = b.Date.ToString("yyyy-MM-dd"), shift = b.Shift.ToString(), hold_expires_at_utc = b.HoldExpiresAt };
+        // Trả giờ địa phương để chatbot không đọc nhầm giờ UTC.
+        var expires = b.HoldExpiresAt is { } utc
+            ? TimeZoneInfo.ConvertTimeFromUtc(DateTime.SpecifyKind(utc, DateTimeKind.Utc), clock.LocalTimeZone).ToString("HH:mm dd/MM/yyyy")
+            : null;
+        return new { booking_id = b.Id, hall = b.HallName, date = b.Date.ToString("yyyy-MM-dd"), shift = b.Shift.ToString(), hold_expires_at_local = expires };
     }
 
     private async Task<object> CreateQuoteAsync(IReadOnlyDictionary<string, JsonElement> input)
