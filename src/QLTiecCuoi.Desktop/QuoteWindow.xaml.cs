@@ -147,11 +147,12 @@ public partial class QuoteWindow : Window
         VatText.Text = Labels.Money(q.VatAmount);
         TotalText.Text = Labels.Money(q.Total);
 
-        var perGuest = q.Total / (q.Tables * 10);
+        // Làm tròn đến nghìn đồng (decimal không nhận số chữ số âm trong Math.Round).
+        var perGuest = Math.Round(q.Total / (q.Tables * 10) / 1000m) * 1000m;
         (SlotText.Text, SlotBanner.Background) = q.SlotStatus switch
         {
-            SlotStatus.Available => ($"Sảnh còn trống ngày {q.Date:dd/MM/yyyy}. Khoảng {Labels.Money(Math.Round(perGuest, -3))}/khách.", Brush("#E3F4E6")),
-            SlotStatus.Held when _bookingId is not null => ($"Sảnh đang được giữ cho khách này. Khoảng {Labels.Money(Math.Round(perGuest, -3))}/khách.", Brush("#E3F4E6")),
+            SlotStatus.Available => ($"Sảnh còn trống ngày {q.Date:dd/MM/yyyy}. Khoảng {Labels.Money(perGuest)}/khách.", Brush("#E3F4E6")),
+            SlotStatus.Held when _bookingId is not null => ($"Sảnh đang được giữ cho khách này. Khoảng {Labels.Money(perGuest)}/khách.", Brush("#E3F4E6")),
             SlotStatus.Held => ("Lưu ý: sảnh này đang có khách khác giữ chỗ vào ngày, ca đã chọn.", Brush("#FFF1C9")),
             _ => ("Lưu ý: sảnh này đã có khách đặt cọc vào ngày, ca đã chọn.", Brush("#F8D7DA")),
         };

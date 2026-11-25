@@ -35,6 +35,21 @@ public partial class MainWindow : Window
         OpenQuote(null);
     }
 
+    private ChatWindow? _chat;
+
+    private void Chat_Click(object sender, RoutedEventArgs e)
+    {
+        if (_chat is { IsLoaded: true })
+        {
+            _chat.Activate();
+            return;
+        }
+        // Mở cạnh màn hình chính để vừa chat vừa nhìn lịch.
+        _chat = new ChatWindow(_api) { Owner = this, Left = Left + Width - 40, Top = Top };
+        _chat.DataChanged += async () => await ReloadAsync();
+        _chat.Show();
+    }
+
     private void Report_Click(object sender, RoutedEventArgs e) =>
         new ReportWindow(_api) { Owner = this }.Show();
 

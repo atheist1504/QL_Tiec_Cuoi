@@ -3,6 +3,8 @@ using Microsoft.EntityFrameworkCore;
 using QLTiecCuoi.Api.Controllers;
 using QLTiecCuoi.Api.Data;
 using QLTiecCuoi.Api.Services;
+using QLTiecCuoi.Api.Services.Chat;
+using Anthropic;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -19,6 +21,21 @@ builder.Services.AddSingleton(builder.Configuration.GetSection("Restaurant").Get
 builder.Services.AddScoped<ContractService>();
 builder.Services.AddScoped<PdfService>();
 builder.Services.AddScoped<ReportService>();
+
+// Chatbot: API key lấy từ cấu hình "Anthropic:ApiKey" (user-secrets) hoặc biến môi trường ANTHROPIC_API_KEY.
+// Key chỉ nằm trên máy chủ API, không nằm trong app desktop hay GitHub.
+builder.Services.AddSingleton(builder.Configuration.GetSection("Chat").Get<ChatOptions>() ?? new ChatOptions());
+builder.Services.AddSingleton<ChatConversationStore>();
+builder.Services.AddSingleton<IChatModel>(_ =>
+{
+    var key = builder.Configuration["Anthropic:ApiKey"];
+    if (string.IsNullOrWhiteSpace(key)) key = Environment.GetEnvironmentVariable("ANTHROPIC_API_KEY");
+    var configured = !string.IsNullOrWhiteSpace(key);
+    var client = configured ? new AnthropicClient { ApiKey = key } : new AnthropicClient { ApiKey = "chua-cau-hinh" };
+    return new ClaudeChatModel(client, configured);
+});
+builder.Services.AddScoped<ChatTools>();
+builder.Services.AddScoped<ChatService>();
 
 builder.Services.AddControllers(o => o.Filters.Add<AppExceptionFilter>())
     .AddJsonOptions(o => o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));

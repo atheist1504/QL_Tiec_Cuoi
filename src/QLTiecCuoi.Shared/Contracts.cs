@@ -201,6 +201,21 @@ public record LiquidationDto(
     DateTime? LiquidatedAt,
     string? Note);
 
+// ----- Chatbot -----
+
+public record ChatRequest(string? ConversationId, string Message);
+
+public record ChatConfirmRequest(bool Approve);
+
+/// <summary>Thao tác ghi dữ liệu chatbot đề xuất, chờ nhân viên xác nhận.</summary>
+public record ChatPendingActionDto(string Title, string Details);
+
+public record ChatReplyDto(
+    string ConversationId,
+    string Text,
+    List<ChatPendingActionDto> PendingActions,
+    List<string> ToolsUsed);
+
 // ----- Báo cáo doanh thu -----
 
 public record RevenueRowDto(string Label, int Events, int Tables, decimal Revenue, int UpcomingEvents, decimal UpcomingValue);

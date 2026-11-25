@@ -27,7 +27,8 @@ public class ApiClient
         // Đổi địa chỉ API bằng biến môi trường QLTC_API_URL khi triển khai.
         var url = Environment.GetEnvironmentVariable("QLTC_API_URL") ?? "http://localhost:5100/";
         if (!url.EndsWith('/')) url += "/";
-        _http = new HttpClient { BaseAddress = new Uri(url), Timeout = TimeSpan.FromSeconds(15) };
+        // Chatbot có thể mất vài chục giây khi phải tra cứu nhiều bước.
+        _http = new HttpClient { BaseAddress = new Uri(url), Timeout = TimeSpan.FromSeconds(120) };
     }
 
     public string BaseUrl => _http.BaseAddress!.ToString();
@@ -82,6 +83,11 @@ public class ApiClient
 
     public Task<RevenueReportDto> RevenueAsync(DateOnly fromMonth, DateOnly toMonth) =>
         GetAsync<RevenueReportDto>($"api/reports/revenue?from={fromMonth:yyyy-MM}&to={toMonth:yyyy-MM}");
+
+    public Task<ChatReplyDto> ChatAsync(ChatRequest req) => SendAsync<ChatReplyDto>(HttpMethod.Post, "api/chat", req);
+
+    public Task<ChatReplyDto> ChatConfirmAsync(string conversationId, bool approve) =>
+        SendAsync<ChatReplyDto>(HttpMethod.Post, $"api/chat/{conversationId}/confirm", new ChatConfirmRequest(approve));
 
     public Task<byte[]> QuotePdfAsync(int quoteId) => GetBytesAsync($"api/quotes/{quoteId}/pdf");
 

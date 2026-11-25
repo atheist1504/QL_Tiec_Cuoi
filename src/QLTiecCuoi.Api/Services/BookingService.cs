@@ -4,7 +4,7 @@ using QLTiecCuoi.Shared;
 
 namespace QLTiecCuoi.Api.Services;
 
-public enum ErrorKind { NotFound, Conflict, Validation }
+public enum ErrorKind { NotFound, Conflict, Validation, Unavailable }
 
 public class AppException(ErrorKind kind, string message) : Exception(message)
 {
