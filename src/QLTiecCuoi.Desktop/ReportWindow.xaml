@@ -1,0 +1,89 @@
+<Window x:Class="QLTiecCuoi.Desktop.ReportWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Báo cáo doanh thu mùa cưới" Height="680" Width="1080"
+        WindowStartupLocation="CenterOwner" FontSize="14">
+    <Window.Resources>
+        <DataTemplate x:Key="BarTemplate">
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="4,0">
+                <Rectangle Width="{Binding RevenueBar}" Height="14" Fill="#2B6CB0" ToolTip="Doanh thu đã thanh lý"/>
+                <Rectangle Width="{Binding UpcomingBar}" Height="14" Fill="#A9C7E8" ToolTip="Giá trị dự kiến (đã cọc, chưa tổ chức)"/>
+            </StackPanel>
+        </DataTemplate>
+        <Style x:Key="Right" TargetType="TextBlock">
+            <Setter Property="HorizontalAlignment" Value="Right"/>
+            <Setter Property="Padding" Value="4,0"/>
+        </Style>
+    </Window.Resources>
+    <DockPanel Margin="16">
+        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal">
+            <TextBlock Text="Từ tháng" VerticalAlignment="Center" Margin="0,0,8,0"/>
+            <ComboBox x:Name="FromBox" Width="110" DisplayMemberPath="Label"/>
+            <TextBlock Text="đến tháng" VerticalAlignment="Center" Margin="16,0,8,0"/>
+            <ComboBox x:Name="ToBox" Width="110" DisplayMemberPath="Label"/>
+            <Button Content="Xem báo cáo" Padding="16,4" Margin="16,0,0,0" Click="Load_Click"/>
+        </StackPanel>
+
+        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,12,0,0">
+            <Border Background="#F3F7FC" Padding="14,8" CornerRadius="6" Margin="0,0,12,0">
+                <StackPanel>
+                    <TextBlock Text="Doanh thu đã thanh lý" Foreground="Gray"/>
+                    <TextBlock x:Name="RevenueText" FontSize="20" FontWeight="SemiBold"/>
+                </StackPanel>
+            </Border>
+            <Border Background="#F3F7FC" Padding="14,8" CornerRadius="6" Margin="0,0,12,0">
+                <StackPanel>
+                    <TextBlock Text="Tiệc đã tổ chức" Foreground="Gray"/>
+                    <TextBlock x:Name="EventsText" FontSize="20" FontWeight="SemiBold"/>
+                </StackPanel>
+            </Border>
+            <Border Background="#F3F7FC" Padding="14,8" CornerRadius="6">
+                <StackPanel>
+                    <TextBlock Text="Đã cọc, sắp tổ chức (dự kiến)" Foreground="Gray"/>
+                    <TextBlock x:Name="UpcomingText" FontSize="20" FontWeight="SemiBold"/>
+                </StackPanel>
+            </Border>
+        </StackPanel>
+
+        <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" Margin="0,8,0,0">
+            <Rectangle Width="14" Height="14" Fill="#2B6CB0"/>
+            <TextBlock Text="Doanh thu đã thanh lý" Margin="6,0,16,0" Foreground="Gray"/>
+            <Rectangle Width="14" Height="14" Fill="#A9C7E8"/>
+            <TextBlock Text="Giá trị dự kiến của tiệc đã cọc" Margin="6,0,16,0" Foreground="Gray"/>
+            <TextBlock x:Name="StatusText" Foreground="#B00020"/>
+        </StackPanel>
+
+        <Grid Margin="0,12,0,0">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/><RowDefinition Height="3*"/>
+                <RowDefinition Height="Auto"/><RowDefinition Height="2*"/>
+            </Grid.RowDefinitions>
+            <TextBlock Text="Theo tháng tổ chức" FontWeight="SemiBold" Margin="0,0,0,4"/>
+            <DataGrid x:Name="MonthGrid" Grid.Row="1" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column"
+                      GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="#EEE" Background="White">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="Tháng" Binding="{Binding Label}" Width="90"/>
+                    <DataGridTextColumn Header="Số tiệc" Binding="{Binding Events}" Width="70" ElementStyle="{StaticResource Right}"/>
+                    <DataGridTextColumn Header="Số bàn" Binding="{Binding Tables}" Width="70" ElementStyle="{StaticResource Right}"/>
+                    <DataGridTextColumn Header="Doanh thu" Binding="{Binding Revenue}" Width="140" ElementStyle="{StaticResource Right}"/>
+                    <DataGridTextColumn Header="Tiệc đã cọc" Binding="{Binding UpcomingEvents}" Width="90" ElementStyle="{StaticResource Right}"/>
+                    <DataGridTextColumn Header="Dự kiến" Binding="{Binding UpcomingValue}" Width="140" ElementStyle="{StaticResource Right}"/>
+                    <DataGridTemplateColumn Header="" Width="*" CellTemplate="{StaticResource BarTemplate}"/>
+                </DataGrid.Columns>
+            </DataGrid>
+            <TextBlock Grid.Row="2" Text="Theo sảnh" FontWeight="SemiBold" Margin="0,12,0,4"/>
+            <DataGrid x:Name="HallGrid" Grid.Row="3" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column"
+                      GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="#EEE" Background="White">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="Sảnh" Binding="{Binding Label}" Width="150"/>
+                    <DataGridTextColumn Header="Số tiệc" Binding="{Binding Events}" Width="70" ElementStyle="{StaticResource Right}"/>
+                    <DataGridTextColumn Header="Số bàn" Binding="{Binding Tables}" Width="70" ElementStyle="{StaticResource Right}"/>
+                    <DataGridTextColumn Header="Doanh thu" Binding="{Binding Revenue}" Width="140" ElementStyle="{StaticResource Right}"/>
+                    <DataGridTextColumn Header="Tiệc đã cọc" Binding="{Binding UpcomingEvents}" Width="90" ElementStyle="{StaticResource Right}"/>
+                    <DataGridTextColumn Header="Dự kiến" Binding="{Binding UpcomingValue}" Width="140" ElementStyle="{StaticResource Right}"/>
+                    <DataGridTemplateColumn Header="" Width="*" CellTemplate="{StaticResource BarTemplate}"/>
+                </DataGrid.Columns>
+            </DataGrid>
+        </Grid>
+    </DockPanel>
+</Window>

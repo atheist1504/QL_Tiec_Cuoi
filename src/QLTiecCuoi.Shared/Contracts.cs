@@ -172,7 +172,40 @@ public record ContractDto(
     DateTime? HoldExpiresAt,
     DateTime CreatedAt,
     string? Note,
-    List<PaymentDto> Payments);
+    List<PaymentDto> Payments,
+    LiquidationDto? Liquidation = null);
+
+// ----- Thanh lý -----
+
+public record ExtraChargeDto(string Description, decimal Amount);
+
+public record LiquidationRequest(int ActualTables, List<ExtraChargeDto> Extras, string? Note);
+
+/// <summary>Kết quả thanh lý: tính lại theo số bàn thực tế và phát sinh.</summary>
+public record LiquidationDto(
+    int ContractedTables,
+    int ActualTables,
+    decimal HallPrice,
+    decimal MenuPerTable,
+    decimal MenuTotal,
+    decimal ServiceTotal,
+    List<ExtraChargeDto> Extras,
+    decimal ExtraTotal,
+    decimal Subtotal,
+    decimal VatPercent,
+    decimal VatAmount,
+    decimal FinalTotal,
+    decimal ContractTotal,
+    decimal Paid,
+    decimal Remaining,
+    DateTime? LiquidatedAt,
+    string? Note);
+
+// ----- Báo cáo doanh thu -----
+
+public record RevenueRowDto(string Label, int Events, int Tables, decimal Revenue, int UpcomingEvents, decimal UpcomingValue);
+
+public record RevenueReportDto(DateOnly From, DateOnly To, List<RevenueRowDto> ByMonth, List<RevenueRowDto> ByHall, RevenueRowDto Total);
 
 public record QuoteSummaryDto(int Id, string CustomerName, string CustomerPhone, string HallName,
     DateOnly Date, Shift Shift, int Tables, decimal Total, DateTime CreatedAt);

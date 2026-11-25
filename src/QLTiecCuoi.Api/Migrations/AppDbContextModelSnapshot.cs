@@ -83,6 +83,9 @@ namespace QLTiecCuoi.Api.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<int?>("ActualTables")
+                        .HasColumnType("int");
+
                     b.Property<int>("BookingId")
                         .HasColumnType("int");
 
@@ -120,6 +123,25 @@ namespace QLTiecCuoi.Api.Migrations
                         .HasPrecision(18)
                         .HasColumnType("decimal(18,0)");
 
+                    b.Property<decimal?>("FinalSubtotal")
+                        .HasPrecision(18)
+                        .HasColumnType("decimal(18,0)");
+
+                    b.Property<decimal?>("FinalTotal")
+                        .HasPrecision(18)
+                        .HasColumnType("decimal(18,0)");
+
+                    b.Property<decimal?>("FinalVat")
+                        .HasPrecision(18)
+                        .HasColumnType("decimal(18,0)");
+
+                    b.Property<DateTime?>("LiquidatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("LiquidationNote")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
                     b.Property<string>("Note")
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
@@ -147,6 +169,33 @@ namespace QLTiecCuoi.Api.Migrations
                     b.HasIndex("QuoteId");
 
                     b.ToTable("Contracts");
+                });
+
+            modelBuilder.Entity("QLTiecCuoi.Api.Data.ContractExtra", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<decimal>("Amount")
+                        .HasPrecision(18)
+                        .HasColumnType("decimal(18,0)");
+
+                    b.Property<int>("ContractId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ContractId");
+
+                    b.ToTable("ContractExtra");
                 });
 
             modelBuilder.Entity("QLTiecCuoi.Api.Data.Hall", b =>
@@ -604,6 +653,15 @@ namespace QLTiecCuoi.Api.Migrations
                     b.Navigation("Quote");
                 });
 
+            modelBuilder.Entity("QLTiecCuoi.Api.Data.ContractExtra", b =>
+                {
+                    b.HasOne("QLTiecCuoi.Api.Data.Contract", null)
+                        .WithMany("Extras")
+                        .HasForeignKey("ContractId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("QLTiecCuoi.Api.Data.Payment", b =>
                 {
                     b.HasOne("QLTiecCuoi.Api.Data.Contract", null)
@@ -642,6 +700,8 @@ namespace QLTiecCuoi.Api.Migrations
 
             modelBuilder.Entity("QLTiecCuoi.Api.Data.Contract", b =>
                 {
+                    b.Navigation("Extras");
+
                     b.Navigation("Payments");
                 });
 

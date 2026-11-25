@@ -46,8 +46,26 @@ public partial class ContractWindow : Window
         PaidText.Text = Labels.Money(c.Paid);
         RemainingText.Text = Labels.Money(c.Remaining);
 
-        if (c.Status == ContractStatus.AwaitingDeposit)
+        if (c.Liquidation is { } l)
         {
+            HoldBanner.Visibility = Visibility.Visible;
+            HoldBanner.Background = Brush(c.Remaining > 0 ? "#FFF1C9" : "#E3F4E6");
+            var tail = c.Remaining switch
+            {
+                > 0 => $"Khách còn phải trả {Labels.Money(c.Remaining)}.",
+                < 0 => $"Nhà hàng cần hoàn lại khách {Labels.Money(-c.Remaining)}.",
+                _ => "Khách đã thanh toán đủ.",
+            };
+            HoldText.Text = $"Đã thanh lý {l.LiquidatedAt?.ToLocalTime():dd/MM/yyyy}: {l.ActualTables} bàn thực tế"
+                            + (l.ExtraTotal > 0 ? $", phát sinh {Labels.Money(l.ExtraTotal)}" : "")
+                            + $", quyết toán {Labels.Money(l.FinalTotal)}. {tail}";
+            TotalText.Text = $"{Labels.Money(c.Total)} → quyết toán {Labels.Money(l.FinalTotal)}";
+            PayBox.Header = "Thu tiền thanh toán cuối";
+            AmountBox.Text = c.Remaining > 0 ? c.Remaining.ToString("0") : "";
+        }
+        else if (c.Status == ContractStatus.AwaitingDeposit)
+        {
+            HoldBanner.Background = Brush("#FFF1C9");
             var need = Math.Max(0, c.DepositRequired - c.Paid);
             HoldBanner.Visibility = Visibility.Visible;
             HoldText.Text = c.HoldExpiresAt is { } exp
@@ -61,8 +79,9 @@ public partial class ContractWindow : Window
             AmountBox.Text = "";
         }
 
-        var open = (c.Status is ContractStatus.AwaitingDeposit or ContractStatus.Deposited) && c.Remaining > 0;
+        var open = c.Status != ContractStatus.Cancelled && c.Remaining > 0;
         PayBox.IsEnabled = open;
+        LiquidateButton.IsEnabled = c.Status == ContractStatus.Deposited;
         CancelButton.IsEnabled = c.Status == ContractStatus.AwaitingDeposit && c.Payments.Count == 0;
 
         PaymentsGrid.ItemsSource = c.Payments.Select(p => new
@@ -121,6 +140,16 @@ public partial class ContractWindow : Window
         catch (ApiException ex)
         {
             MessageBox.Show(this, ex.Message, "Không hủy được", MessageBoxButton.OK, MessageBoxImage.Warning);
+        }
+    }
+
+    private void Liquidate_Click(object sender, RoutedEventArgs e)
+    {
+        var w = new LiquidationWindow(_api, _c) { Owner = this };
+        if (w.ShowDialog() == true && w.Result is { } result)
+        {
+            Show(result);
+            Changed = true;
         }
     }
 

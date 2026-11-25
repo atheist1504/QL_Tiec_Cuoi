@@ -20,6 +20,7 @@
             <Button Content="Tuần sau ›" Padding="12,4" Margin="8,0,0,0" Click="Next_Click"/>
             <Button Content="Báo giá mới" Padding="12,4" Margin="24,0,0,0" Click="NewQuote_Click"/>
             <Button Content="Thực đơn &amp; dịch vụ" Padding="12,4" Margin="8,0,0,0" Click="Catalog_Click"/>
+            <Button Content="Báo cáo doanh thu" Padding="12,4" Margin="8,0,0,0" Click="Report_Click"/>
         </StackPanel>
 
         <!-- Chú thích màu -->

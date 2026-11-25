@@ -35,6 +35,9 @@ public partial class MainWindow : Window
         OpenQuote(null);
     }
 
+    private void Report_Click(object sender, RoutedEventArgs e) =>
+        new ReportWindow(_api) { Owner = this }.Show();
+
     private void Catalog_Click(object sender, RoutedEventArgs e) =>
         new CatalogWindow(_api) { Owner = this }.ShowDialog();
 

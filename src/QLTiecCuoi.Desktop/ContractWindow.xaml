@@ -41,6 +41,7 @@
         </Border>
 
         <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,12,0,0">
+            <Button x:Name="LiquidateButton" Content="Thanh lý sau tiệc" Padding="14,6" Margin="0,0,8,0" Click="Liquidate_Click"/>
             <Button Content="Xuất PDF hợp đồng" Padding="14,6" Click="Pdf_Click"/>
             <Button x:Name="CancelButton" Content="Hủy hợp đồng" Padding="14,6" Margin="8,0,0,0" Click="Cancel_Click"/>
             <Button Content="Đóng" Padding="14,6" Margin="8,0,0,0" IsCancel="True"/>

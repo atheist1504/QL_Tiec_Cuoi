@@ -18,6 +18,7 @@ builder.Services.AddSingleton(builder.Configuration.GetSection("Contract").Get<C
 builder.Services.AddSingleton(builder.Configuration.GetSection("Restaurant").Get<RestaurantOptions>() ?? new RestaurantOptions());
 builder.Services.AddScoped<ContractService>();
 builder.Services.AddScoped<PdfService>();
+builder.Services.AddScoped<ReportService>();
 
 builder.Services.AddControllers(o => o.Filters.Add<AppExceptionFilter>())
     .AddJsonOptions(o => o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));

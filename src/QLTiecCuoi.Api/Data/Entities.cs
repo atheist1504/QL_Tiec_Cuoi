@@ -98,6 +98,27 @@ public class Contract
     public string? Note { get; set; }
     public DateTime CreatedAt { get; set; }
     public List<Payment> Payments { get; set; } = [];
+
+    // Thanh lý (điền khi Status = Liquidated)
+    public DateTime? LiquidatedAt { get; set; }
+    public int? ActualTables { get; set; }
+    public decimal? FinalSubtotal { get; set; }
+    public decimal? FinalVat { get; set; }
+    public decimal? FinalTotal { get; set; }
+    public string? LiquidationNote { get; set; }
+    public List<ContractExtra> Extras { get; set; } = [];
+
+    /// <summary>Số tiền khách phải trả: sau thanh lý là giá trị quyết toán, trước đó là giá trị hợp đồng.</summary>
+    public decimal Payable => FinalTotal ?? Total;
+}
+
+/// <summary>Khoản phát sinh khi thanh lý (thêm đồ uống, phụ thu...).</summary>
+public class ContractExtra
+{
+    public int Id { get; set; }
+    public int ContractId { get; set; }
+    public string Description { get; set; } = "";
+    public decimal Amount { get; set; }
 }
 
 public class Payment

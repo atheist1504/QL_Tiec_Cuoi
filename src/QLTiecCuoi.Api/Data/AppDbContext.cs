@@ -102,10 +102,22 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             e.HasOne(x => x.Booking).WithMany().HasForeignKey(x => x.BookingId).OnDelete(DeleteBehavior.Restrict);
             e.HasOne(x => x.Quote).WithMany().HasForeignKey(x => x.QuoteId).OnDelete(DeleteBehavior.Restrict);
             e.HasMany(x => x.Payments).WithOne().HasForeignKey(x => x.ContractId).OnDelete(DeleteBehavior.Cascade);
+            e.HasMany(x => x.Extras).WithOne().HasForeignKey(x => x.ContractId).OnDelete(DeleteBehavior.Cascade);
+            e.Ignore(x => x.Payable);
+            e.Property(x => x.FinalSubtotal).HasPrecision(18, 0);
+            e.Property(x => x.FinalVat).HasPrecision(18, 0);
+            e.Property(x => x.FinalTotal).HasPrecision(18, 0);
+            e.Property(x => x.LiquidationNote).HasMaxLength(500);
             // Mỗi lượt đặt sảnh chỉ có một hợp đồng còn hiệu lực.
             e.HasIndex(x => x.BookingId).IsUnique()
                 .HasFilter($"[Status] <> {(int)ContractStatus.Cancelled}")
                 .HasDatabaseName("UX_Contract_ActiveBooking");
+        });
+
+        b.Entity<ContractExtra>(e =>
+        {
+            e.Property(x => x.Description).HasMaxLength(200).IsRequired();
+            e.Property(x => x.Amount).HasPrecision(18, 0);
         });
 
         b.Entity<Payment>(e =>

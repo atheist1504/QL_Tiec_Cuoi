@@ -36,6 +36,8 @@ dotnet run --project src/QLTiecCuoi.Desktop
 
 Đổi địa chỉ API của app desktop bằng biến môi trường `QLTC_API_URL`.
 
+Ở môi trường Development, `appsettings.Development.json` bật `Contract:AllowLiquidationBeforeEvent` để demo được thanh lý trước ngày tiệc. Khi triển khai thật, tùy chọn này tắt: chỉ thanh lý từ ngày tổ chức trở đi.
+
 ## Kiểm thử
 
 ```powershell
@@ -50,8 +52,8 @@ dotnet test
 - [x] Báo giá: tiền sảnh + thực đơn × số bàn + dịch vụ + VAT 10%, xem trước, lưu với giá tại thời điểm lập
 - [x] Xuất báo giá PDF
 - [x] Hợp đồng lập từ báo giá, ghi nhận đặt cọc (mặc định 30%), đủ cọc thì chốt sảnh; xuất hợp đồng PDF (QuestPDF)
-- [ ] Thanh lý hợp đồng
-- [ ] Báo cáo doanh thu mùa cưới
+- [x] Thanh lý hợp đồng: tính lại theo số bàn thực tế + phát sinh, trừ tiền cọc, thu tiền cuối hoặc hoàn lại
+- [x] Báo cáo doanh thu mùa cưới theo tháng và theo sảnh (đã thanh lý và dự kiến)
 - [ ] Chatbot AI (Claude API)
 
 ## Tài liệu quản lý dự án

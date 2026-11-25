@@ -27,6 +27,14 @@ public class ContractsController(ContractService service, PdfService pdf) : Cont
     [HttpPost("{id:int}/payments")]
     public Task<ContractDto> Pay(int id, PaymentRequest req) => service.RecordPaymentAsync(id, req);
 
+    /// <summary>Tính thử thanh lý theo số bàn thực tế và phát sinh, không lưu.</summary>
+    [HttpPost("{id:int}/liquidation/preview")]
+    public Task<LiquidationDto> PreviewLiquidation(int id, LiquidationRequest req) => service.PreviewLiquidationAsync(id, req);
+
+    /// <summary>Thanh lý hợp đồng sau tiệc. Sau đó ghi nhận tiền cuối qua /payments.</summary>
+    [HttpPost("{id:int}/liquidate")]
+    public Task<ContractDto> Liquidate(int id, LiquidationRequest req) => service.LiquidateAsync(id, req);
+
     [HttpPost("{id:int}/cancel")]
     public Task<ContractDto> Cancel(int id) => service.CancelAsync(id);
 

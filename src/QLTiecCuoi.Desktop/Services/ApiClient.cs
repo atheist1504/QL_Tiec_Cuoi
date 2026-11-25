@@ -74,6 +74,15 @@ public class ApiClient
 
     public Task<ContractDto> CancelContractAsync(int id) => SendAsync<ContractDto>(HttpMethod.Post, $"api/contracts/{id}/cancel", null);
 
+    public Task<LiquidationDto> PreviewLiquidationAsync(int contractId, LiquidationRequest req) =>
+        SendAsync<LiquidationDto>(HttpMethod.Post, $"api/contracts/{contractId}/liquidation/preview", req);
+
+    public Task<ContractDto> LiquidateAsync(int contractId, LiquidationRequest req) =>
+        SendAsync<ContractDto>(HttpMethod.Post, $"api/contracts/{contractId}/liquidate", req);
+
+    public Task<RevenueReportDto> RevenueAsync(DateOnly fromMonth, DateOnly toMonth) =>
+        GetAsync<RevenueReportDto>($"api/reports/revenue?from={fromMonth:yyyy-MM}&to={toMonth:yyyy-MM}");
+
     public Task<byte[]> QuotePdfAsync(int quoteId) => GetBytesAsync($"api/quotes/{quoteId}/pdf");
 
     public Task<byte[]> ContractPdfAsync(int contractId) => GetBytesAsync($"api/contracts/{contractId}/pdf");
