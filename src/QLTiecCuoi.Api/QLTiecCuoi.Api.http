@@ -1,0 +1,6 @@
+@QLTiecCuoi.Api_HostAddress = http://localhost:5100
+
+GET {{QLTiecCuoi.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

@@ -1,0 +1,29 @@
+<Window x:Class="QLTiecCuoi.Desktop.HoldWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Giữ sảnh cho khách" SizeToContent="Height" Width="440"
+        WindowStartupLocation="CenterOwner" ResizeMode="NoResize" FontSize="14">
+    <StackPanel Margin="20">
+        <TextBlock x:Name="SlotText" FontWeight="SemiBold" TextWrapping="Wrap" Margin="0,0,0,16"/>
+
+        <TextBlock Text="Tên khách hàng *"/>
+        <TextBox x:Name="NameBox" Margin="0,4,0,12" Padding="4"/>
+
+        <TextBlock Text="Số điện thoại *"/>
+        <TextBox x:Name="PhoneBox" Margin="0,4,0,12" Padding="4"/>
+
+        <TextBlock x:Name="TablesLabel" Text="Số bàn dự kiến *"/>
+        <TextBox x:Name="TablesBox" Margin="0,4,0,12" Padding="4"/>
+
+        <TextBlock Text="Ghi chú"/>
+        <TextBox x:Name="NoteBox" Margin="0,4,0,12" Padding="4" Height="60"
+                 TextWrapping="Wrap" AcceptsReturn="True"/>
+
+        <TextBlock x:Name="ErrorText" Foreground="#B00020" TextWrapping="Wrap" Margin="0,0,0,12"/>
+
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+            <Button x:Name="SaveButton" Content="Giữ sảnh" Padding="16,4" IsDefault="True" Click="Save_Click"/>
+            <Button Content="Đóng" Padding="16,4" Margin="8,0,0,0" IsCancel="True"/>
+        </StackPanel>
+    </StackPanel>
+</Window>

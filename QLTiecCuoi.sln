@@ -1,0 +1,50 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{2D579D55-96A3-4DFD-B2F5-266F902CF0C5}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QLTiecCuoi.Api", "src\QLTiecCuoi.Api\QLTiecCuoi.Api.csproj", "{C2C03F40-9C6E-4AAE-8C37-593DCB3EDA67}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QLTiecCuoi.Shared", "src\QLTiecCuoi.Shared\QLTiecCuoi.Shared.csproj", "{AEF6DC2B-FAC6-494D-827D-DB58AE600C04}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QLTiecCuoi.Desktop", "src\QLTiecCuoi.Desktop\QLTiecCuoi.Desktop.csproj", "{1DFA6AA7-6431-4EC1-AD28-7D6FFB709A11}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{654DF181-D3B2-4287-95F2-83BDA12D4E5A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QLTiecCuoi.Api.Tests", "tests\QLTiecCuoi.Api.Tests\QLTiecCuoi.Api.Tests.csproj", "{762AC7B5-BD2E-4D4F-B772-5D6DC6658B1D}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{C2C03F40-9C6E-4AAE-8C37-593DCB3EDA67}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C2C03F40-9C6E-4AAE-8C37-593DCB3EDA67}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C2C03F40-9C6E-4AAE-8C37-593DCB3EDA67}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C2C03F40-9C6E-4AAE-8C37-593DCB3EDA67}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AEF6DC2B-FAC6-494D-827D-DB58AE600C04}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AEF6DC2B-FAC6-494D-827D-DB58AE600C04}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AEF6DC2B-FAC6-494D-827D-DB58AE600C04}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AEF6DC2B-FAC6-494D-827D-DB58AE600C04}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1DFA6AA7-6431-4EC1-AD28-7D6FFB709A11}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1DFA6AA7-6431-4EC1-AD28-7D6FFB709A11}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1DFA6AA7-6431-4EC1-AD28-7D6FFB709A11}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1DFA6AA7-6431-4EC1-AD28-7D6FFB709A11}.Release|Any CPU.Build.0 = Release|Any CPU
+		{762AC7B5-BD2E-4D4F-B772-5D6DC6658B1D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{762AC7B5-BD2E-4D4F-B772-5D6DC6658B1D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{762AC7B5-BD2E-4D4F-B772-5D6DC6658B1D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{762AC7B5-BD2E-4D4F-B772-5D6DC6658B1D}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{C2C03F40-9C6E-4AAE-8C37-593DCB3EDA67} = {2D579D55-96A3-4DFD-B2F5-266F902CF0C5}
+		{AEF6DC2B-FAC6-494D-827D-DB58AE600C04} = {2D579D55-96A3-4DFD-B2F5-266F902CF0C5}
+		{1DFA6AA7-6431-4EC1-AD28-7D6FFB709A11} = {2D579D55-96A3-4DFD-B2F5-266F902CF0C5}
+		{762AC7B5-BD2E-4D4F-B772-5D6DC6658B1D} = {654DF181-D3B2-4287-95F2-83BDA12D4E5A}
+	EndGlobalSection
+EndGlobal
