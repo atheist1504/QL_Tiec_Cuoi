@@ -53,8 +53,8 @@ public class BookingServiceTests : IDisposable
         using var db = NewDb();
         var svc = NewService(db);
         await svc.HoldAsync(Req());
-        var ex = await Assert.ThrowsAsync<BookingException>(() => svc.HoldAsync(Req()));
-        Assert.Equal(BookingErrorKind.Conflict, ex.Kind);
+        var ex = await Assert.ThrowsAsync<AppException>(() => svc.HoldAsync(Req()));
+        Assert.Equal(ErrorKind.Conflict, ex.Kind);
     }
 
     [Fact]
@@ -108,7 +108,7 @@ public class BookingServiceTests : IDisposable
         static async Task<bool> Try(Func<Task> f)
         {
             try { await f(); return true; }
-            catch (BookingException e) when (e.Kind == BookingErrorKind.Conflict) { return false; }
+            catch (AppException e) when (e.Kind == ErrorKind.Conflict) { return false; }
         }
     }
 
@@ -134,17 +134,17 @@ public class BookingServiceTests : IDisposable
     public async Task Hold_InvalidTableCount_IsRejected(int tables)
     {
         using var db = NewDb();
-        var ex = await Assert.ThrowsAsync<BookingException>(() => NewService(db).HoldAsync(Req(tables: tables)));
-        Assert.Equal(BookingErrorKind.Validation, ex.Kind);
+        var ex = await Assert.ThrowsAsync<AppException>(() => NewService(db).HoldAsync(Req(tables: tables)));
+        Assert.Equal(ErrorKind.Validation, ex.Kind);
     }
 
     [Fact]
     public async Task Hold_PastOrTodayDate_IsRejected()
     {
         using var db = NewDb();
-        var ex = await Assert.ThrowsAsync<BookingException>(
+        var ex = await Assert.ThrowsAsync<AppException>(
             () => NewService(db).HoldAsync(Req(date: new DateOnly(2026, 12, 1))));
-        Assert.Equal(BookingErrorKind.Validation, ex.Kind);
+        Assert.Equal(ErrorKind.Validation, ex.Kind);
     }
 
     [Fact]
@@ -172,7 +172,7 @@ public class BookingServiceTests : IDisposable
         var b = await svc.HoldAsync(Req());
         db.Bookings.Single().Status = BookingStatus.Deposited;
         await db.SaveChangesAsync();
-        var ex = await Assert.ThrowsAsync<BookingException>(() => svc.CancelHoldAsync(b.Id));
-        Assert.Equal(BookingErrorKind.Validation, ex.Kind);
+        var ex = await Assert.ThrowsAsync<AppException>(() => svc.CancelHoldAsync(b.Id));
+        Assert.Equal(ErrorKind.Validation, ex.Kind);
     }
 }

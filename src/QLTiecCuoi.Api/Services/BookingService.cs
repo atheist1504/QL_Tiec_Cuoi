@@ -4,11 +4,11 @@ using QLTiecCuoi.Shared;
 
 namespace QLTiecCuoi.Api.Services;
 
-public enum BookingErrorKind { NotFound, Conflict, Validation }
+public enum ErrorKind { NotFound, Conflict, Validation }
 
-public class BookingException(BookingErrorKind kind, string message) : Exception(message)
+public class AppException(ErrorKind kind, string message) : Exception(message)
 {
-    public BookingErrorKind Kind { get; } = kind;
+    public ErrorKind Kind { get; } = kind;
 }
 
 public class BookingOptions
@@ -34,9 +34,9 @@ public class BookingService(AppDbContext db, TimeProvider clock, BookingOptions 
     public async Task<List<SlotDto>> GetScheduleAsync(DateOnly from, DateOnly to)
     {
         if (to < from)
-            throw new BookingException(BookingErrorKind.Validation, "Ngày kết thúc phải sau ngày bắt đầu.");
+            throw new AppException(ErrorKind.Validation, "Ngày kết thúc phải sau ngày bắt đầu.");
         if (to.DayNumber - from.DayNumber + 1 > options.MaxScheduleDays)
-            throw new BookingException(BookingErrorKind.Validation, $"Chỉ xem tối đa {options.MaxScheduleDays} ngày một lần.");
+            throw new AppException(ErrorKind.Validation, $"Chỉ xem tối đa {options.MaxScheduleDays} ngày một lần.");
 
         var halls = await db.Halls.Where(h => h.IsActive).OrderBy(h => h.Id).ToListAsync();
         var now = Now;
@@ -66,18 +66,18 @@ public class BookingService(AppDbContext db, TimeProvider clock, BookingOptions 
     public async Task<BookingDto> HoldAsync(HoldRequest req)
     {
         if (string.IsNullOrWhiteSpace(req.CustomerName))
-            throw new BookingException(BookingErrorKind.Validation, "Vui lòng nhập tên khách hàng.");
+            throw new AppException(ErrorKind.Validation, "Vui lòng nhập tên khách hàng.");
         if (string.IsNullOrWhiteSpace(req.CustomerPhone))
-            throw new BookingException(BookingErrorKind.Validation, "Vui lòng nhập số điện thoại.");
+            throw new AppException(ErrorKind.Validation, "Vui lòng nhập số điện thoại.");
         if (!Enum.IsDefined(req.Shift))
-            throw new BookingException(BookingErrorKind.Validation, "Ca tiệc không hợp lệ.");
+            throw new AppException(ErrorKind.Validation, "Ca tiệc không hợp lệ.");
         if (req.Date <= Today)
-            throw new BookingException(BookingErrorKind.Validation, "Chỉ nhận đặt sảnh từ ngày mai trở đi.");
+            throw new AppException(ErrorKind.Validation, "Chỉ nhận đặt sảnh từ ngày mai trở đi.");
 
         var hall = await db.Halls.FirstOrDefaultAsync(h => h.Id == req.HallId && h.IsActive)
-            ?? throw new BookingException(BookingErrorKind.NotFound, "Không tìm thấy sảnh.");
+            ?? throw new AppException(ErrorKind.NotFound, "Không tìm thấy sảnh.");
         if (req.ExpectedTables <= 0 || req.ExpectedTables > hall.MaxTables)
-            throw new BookingException(BookingErrorKind.Validation,
+            throw new AppException(ErrorKind.Validation,
                 $"Số bàn phải từ 1 đến {hall.MaxTables} cho {hall.Name}.");
 
         var now = Now;
@@ -130,7 +130,7 @@ public class BookingService(AppDbContext db, TimeProvider clock, BookingOptions 
     public async Task<BookingDto> GetAsync(int id)
     {
         var b = await db.Bookings.Include(x => x.Hall).FirstOrDefaultAsync(x => x.Id == id)
-            ?? throw new BookingException(BookingErrorKind.NotFound, "Không tìm thấy lượt đặt sảnh.");
+            ?? throw new AppException(ErrorKind.NotFound, "Không tìm thấy lượt đặt sảnh.");
         return ToDto(b);
     }
 
@@ -138,9 +138,9 @@ public class BookingService(AppDbContext db, TimeProvider clock, BookingOptions 
     public async Task<BookingDto> CancelHoldAsync(int id)
     {
         var b = await db.Bookings.Include(x => x.Hall).FirstOrDefaultAsync(x => x.Id == id)
-            ?? throw new BookingException(BookingErrorKind.NotFound, "Không tìm thấy lượt đặt sảnh.");
+            ?? throw new AppException(ErrorKind.NotFound, "Không tìm thấy lượt đặt sảnh.");
         if (b.Status == BookingStatus.Deposited)
-            throw new BookingException(BookingErrorKind.Validation,
+            throw new AppException(ErrorKind.Validation,
                 "Sảnh đã đặt cọc, không thể hủy giữ chỗ. Hãy xử lý qua hợp đồng.");
         b.Status = BookingStatus.Cancelled;
         await db.SaveChangesAsync();
@@ -150,8 +150,8 @@ public class BookingService(AppDbContext db, TimeProvider clock, BookingOptions 
     private static bool IsExpiredHold(Booking b, DateTime now) =>
         b.Status == BookingStatus.Held && b.HoldExpiresAt is { } exp && exp <= now;
 
-    private static BookingException SlotTaken(Hall hall, HoldRequest req) =>
-        new(BookingErrorKind.Conflict,
+    private static AppException SlotTaken(Hall hall, HoldRequest req) =>
+        new(ErrorKind.Conflict,
             $"{hall.Name} ca {Labels.Of(req.Shift).ToLower()} ngày {req.Date:dd/MM/yyyy} đã có khách giữ hoặc đặt cọc.");
 
     private static BookingDto ToDto(Booking b) => new(

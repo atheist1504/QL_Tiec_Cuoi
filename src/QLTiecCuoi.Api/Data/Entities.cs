@@ -26,3 +26,67 @@ public class Booking
     public string? Note { get; set; }
     public DateTime CreatedAt { get; set; }
 }
+
+public class MenuItem
+{
+    public int Id { get; set; }
+    public string Name { get; set; } = "";
+    public MenuCategory Category { get; set; }
+    public decimal PricePerTable { get; set; }
+    public bool IsActive { get; set; } = true;
+}
+
+public class ServiceItem
+{
+    public int Id { get; set; }
+    public string Name { get; set; } = "";
+    public string Unit { get; set; } = "";
+    public decimal Price { get; set; }
+    public bool IsActive { get; set; } = true;
+}
+
+/// <summary>
+/// Báo giá. Giá được chụp lại tại thời điểm lập (snapshot) để khi thực đơn
+/// đổi giá sau này, báo giá cũ vẫn giữ nguyên số tiền đã gửi khách.
+/// Đổi thực đơn = lập báo giá mới cho cùng lượt đặt sảnh.
+/// </summary>
+public class Quote
+{
+    public int Id { get; set; }
+    public int? BookingId { get; set; }
+    public Booking? Booking { get; set; }
+    public int HallId { get; set; }
+    public Hall Hall { get; set; } = null!;
+    public DateOnly EventDate { get; set; }
+    public Shift Shift { get; set; }
+    public int Tables { get; set; }
+    public string CustomerName { get; set; } = "";
+    public string CustomerPhone { get; set; } = "";
+    public decimal HallPrice { get; set; }
+    public decimal MenuTotal { get; set; }
+    public decimal ServiceTotal { get; set; }
+    public decimal Subtotal { get; set; }
+    public decimal VatPercent { get; set; }
+    public decimal VatAmount { get; set; }
+    public decimal Total { get; set; }
+    public string? Note { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public DateOnly ValidUntil { get; set; }
+    public List<QuoteLine> Lines { get; set; } = [];
+}
+
+public enum QuoteLineKind { Menu = 1, Service = 2 }
+
+public class QuoteLine
+{
+    public int Id { get; set; }
+    public int QuoteId { get; set; }
+    public QuoteLineKind Kind { get; set; }
+    public int? MenuItemId { get; set; }
+    public int? ServiceItemId { get; set; }
+    public string Name { get; set; } = "";
+    public string Unit { get; set; } = "";
+    public decimal UnitPrice { get; set; }
+    public int Quantity { get; set; }
+    public decimal Amount { get; set; }
+}

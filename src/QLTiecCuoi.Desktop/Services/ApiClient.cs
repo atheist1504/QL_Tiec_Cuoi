@@ -41,6 +41,26 @@ public class ApiClient
 
     public Task<BookingDto> CancelHoldAsync(int id) => SendAsync<BookingDto>(HttpMethod.Post, $"api/bookings/{id}/cancel", null);
 
+    public Task<BookingDto> GetBookingAsync(int id) => GetAsync<BookingDto>($"api/bookings/{id}");
+
+    public Task<List<MenuItemDto>> GetMenuAsync(bool includeInactive = false) =>
+        GetAsync<List<MenuItemDto>>($"api/menu-items?includeInactive={includeInactive}");
+
+    public Task<MenuItemDto> SaveMenuItemAsync(int? id, MenuItemUpsert req) => id is null
+        ? SendAsync<MenuItemDto>(HttpMethod.Post, "api/menu-items", req)
+        : SendAsync<MenuItemDto>(HttpMethod.Put, $"api/menu-items/{id}", req);
+
+    public Task<List<ServiceItemDto>> GetServicesAsync(bool includeInactive = false) =>
+        GetAsync<List<ServiceItemDto>>($"api/services?includeInactive={includeInactive}");
+
+    public Task<ServiceItemDto> SaveServiceAsync(int? id, ServiceItemUpsert req) => id is null
+        ? SendAsync<ServiceItemDto>(HttpMethod.Post, "api/services", req)
+        : SendAsync<ServiceItemDto>(HttpMethod.Put, $"api/services/{id}", req);
+
+    public Task<QuoteDto> PreviewQuoteAsync(QuoteRequest req) => SendAsync<QuoteDto>(HttpMethod.Post, "api/quotes/preview", req);
+
+    public Task<QuoteDto> CreateQuoteAsync(QuoteRequest req) => SendAsync<QuoteDto>(HttpMethod.Post, "api/quotes", req);
+
     private Task<T> GetAsync<T>(string path) => SendAsync<T>(HttpMethod.Get, path, null);
 
     private async Task<T> SendAsync<T>(HttpMethod method, string path, object? body)

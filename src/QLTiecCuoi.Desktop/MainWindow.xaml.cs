@@ -29,6 +29,32 @@ public partial class MainWindow : Window
         await ReloadAsync();
     }
 
+    private async void NewQuote_Click(object sender, RoutedEventArgs e)
+    {
+        if (!await EnsureHallsAsync()) return;
+        OpenQuote(null);
+    }
+
+    private void Catalog_Click(object sender, RoutedEventArgs e) =>
+        new CatalogWindow(_api) { Owner = this }.ShowDialog();
+
+    private void OpenQuote(QuotePrefill? prefill)
+    {
+        var w = new QuoteWindow(_api, _halls, prefill) { Owner = this };
+        if (w.ShowDialog() == true && w.Saved is { } q)
+            StatusText.Text = $"Đã lưu báo giá #{q.Id} cho {q.CustomerName}: {Labels.Money(q.Total)}.";
+    }
+
+    private static QuotePrefill Prefill(BookingDto b) =>
+        new(b.HallId, b.Date, b.Shift, b.CustomerName, b.CustomerPhone, b.ExpectedTables, b.Id);
+
+    private async Task<bool> EnsureHallsAsync()
+    {
+        if (_halls.Count > 0) return true;
+        await ReloadAsync();
+        return _halls.Count > 0;
+    }
+
     private int Days => int.Parse(((ComboBoxItem)DaysBox.SelectedItem).Content.ToString()!);
 
     private async Task ReloadAsync()
@@ -99,24 +125,40 @@ public partial class MainWindow : Window
             case SlotStatus.Available:
                 var dlg = new HoldWindow(_api, hall, slot.Date, slot.Shift) { Owner = this };
                 if (dlg.ShowDialog() == true)
+                {
                     StatusText.Text = $"Đã giữ {hall.Name} cho {dlg.Result!.CustomerName}.";
-                await ReloadAsync();
+                    await ReloadAsync();
+                    var next = MessageBox.Show(this, $"Đã giữ {hall.Name} cho khách {dlg.Result.CustomerName}.\nLập báo giá cho khách này ngay?",
+                        "Đã giữ sảnh", MessageBoxButton.YesNo, MessageBoxImage.Question);
+                    if (next == MessageBoxResult.Yes) OpenQuote(Prefill(dlg.Result));
+                }
+                else await ReloadAsync();
                 break;
 
             case SlotStatus.Held:
                 var ask = MessageBox.Show(this,
-                    $"Hủy giữ chỗ {hall.Name}, ca {Labels.Of(slot.Shift).ToLower()} ngày {slot.Date:dd/MM/yyyy} của khách {slot.CustomerName}?",
-                    "Hủy giữ chỗ", MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No);
-                if (ask != MessageBoxResult.Yes) return;
+                    $"{hall.Name}, ca {Labels.Of(slot.Shift).ToLower()} ngày {slot.Date:dd/MM/yyyy} đang giữ cho khách {slot.CustomerName}.\n\n" +
+                    "Yes: lập báo giá cho khách này\nNo: hủy giữ chỗ\nCancel: đóng",
+                    "Sảnh đang giữ chỗ", MessageBoxButton.YesNoCancel, MessageBoxImage.Question, MessageBoxResult.Cancel);
                 try
                 {
-                    await _api.CancelHoldAsync(slot.BookingId!.Value);
+                    if (ask == MessageBoxResult.Yes)
+                    {
+                        OpenQuote(Prefill(await _api.GetBookingAsync(slot.BookingId!.Value)));
+                    }
+                    else if (ask == MessageBoxResult.No &&
+                             MessageBox.Show(this, $"Chắc chắn hủy giữ chỗ của khách {slot.CustomerName}?", "Xác nhận hủy",
+                                 MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No) == MessageBoxResult.Yes)
+                    {
+                        await _api.CancelHoldAsync(slot.BookingId!.Value);
+                        await ReloadAsync();
+                    }
                 }
                 catch (ApiException ex)
                 {
-                    MessageBox.Show(this, ex.Message, "Không hủy được", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    MessageBox.Show(this, ex.Message, "Không thực hiện được", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    await ReloadAsync();
                 }
-                await ReloadAsync();
                 break;
 
             case SlotStatus.Deposited:

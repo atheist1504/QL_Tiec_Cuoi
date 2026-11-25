@@ -1,0 +1,121 @@
+<Window x:Class="QLTiecCuoi.Desktop.QuoteWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Lập báo giá tiệc cưới" Height="720" Width="1180"
+        WindowStartupLocation="CenterOwner" FontSize="14">
+    <Grid Margin="16">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="430"/>
+            <ColumnDefinition Width="24"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- Cột trái: thông tin tiệc, thực đơn, dịch vụ -->
+        <ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Auto">
+            <StackPanel>
+                <TextBlock Text="Thông tin tiệc" FontSize="17" FontWeight="SemiBold" Margin="0,0,0,8"/>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="110"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/>
+                    </Grid.RowDefinitions>
+                    <TextBlock Text="Tên khách *" VerticalAlignment="Center"/>
+                    <TextBox x:Name="NameBox" Grid.Column="1" Margin="0,3" Padding="3"/>
+                    <TextBlock Grid.Row="1" Text="Điện thoại *" VerticalAlignment="Center"/>
+                    <TextBox x:Name="PhoneBox" Grid.Row="1" Grid.Column="1" Margin="0,3" Padding="3"/>
+                    <TextBlock Grid.Row="2" Text="Sảnh" VerticalAlignment="Center"/>
+                    <ComboBox x:Name="HallBox" Grid.Row="2" Grid.Column="1" Margin="0,3" DisplayMemberPath="Name"/>
+                    <TextBlock Grid.Row="3" Text="Ngày" VerticalAlignment="Center"/>
+                    <DatePicker x:Name="DatePick" Grid.Row="3" Grid.Column="1" Margin="0,3"/>
+                    <TextBlock Grid.Row="4" Text="Ca" VerticalAlignment="Center"/>
+                    <ComboBox x:Name="ShiftBox" Grid.Row="4" Grid.Column="1" Margin="0,3"/>
+                    <TextBlock Grid.Row="5" Text="Số bàn" VerticalAlignment="Center"/>
+                    <TextBox x:Name="TablesBox" Grid.Row="5" Grid.Column="1" Margin="0,3" Padding="3"/>
+                </Grid>
+
+                <TextBlock Text="Thực đơn (giá mỗi bàn 10 khách)" FontSize="17" FontWeight="SemiBold" Margin="0,16,0,4"/>
+                <ItemsControl x:Name="MenuList">
+                    <ItemsControl.GroupStyle>
+                        <GroupStyle>
+                            <GroupStyle.HeaderTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding Name}" FontWeight="SemiBold" Foreground="#555" Margin="0,8,0,2"/>
+                                </DataTemplate>
+                            </GroupStyle.HeaderTemplate>
+                        </GroupStyle>
+                    </ItemsControl.GroupStyle>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <CheckBox Content="{Binding Text}" IsChecked="{Binding IsSelected}" Margin="8,2"/>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <TextBlock Text="Dịch vụ" FontSize="17" FontWeight="SemiBold" Margin="0,16,0,4"/>
+                <ItemsControl x:Name="ServiceList">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <DockPanel Margin="0,2">
+                                <TextBox DockPanel.Dock="Right" Width="50" Text="{Binding Quantity, UpdateSourceTrigger=PropertyChanged}"
+                                         IsEnabled="{Binding IsSelected}" TextAlignment="Right" Padding="2"/>
+                                <CheckBox Content="{Binding Text}" IsChecked="{Binding IsSelected}" VerticalAlignment="Center" Margin="8,0"/>
+                            </DockPanel>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <TextBlock Text="Ghi chú" Margin="0,16,0,4"/>
+                <TextBox x:Name="NoteBox" Height="50" TextWrapping="Wrap" AcceptsReturn="True" Padding="3"/>
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- Cột phải: xem trước báo giá -->
+        <DockPanel Grid.Column="2">
+            <TextBlock DockPanel.Dock="Top" Text="Xem trước báo giá" FontSize="17" FontWeight="SemiBold"/>
+            <Border x:Name="SlotBanner" DockPanel.Dock="Top" Margin="0,8" Padding="10,6" CornerRadius="4" Background="#F3F3F3">
+                <TextBlock x:Name="SlotText" TextWrapping="Wrap"/>
+            </Border>
+
+            <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,12,0,0">
+                <Button x:Name="SaveButton" Content="Lưu báo giá" Padding="18,6" Click="Save_Click" IsEnabled="False"/>
+                <Button Content="Đóng" Padding="18,6" Margin="8,0,0,0" IsCancel="True"/>
+            </StackPanel>
+
+            <Grid DockPanel.Dock="Bottom" Margin="0,8,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition/><RowDefinition/><RowDefinition/>
+                </Grid.RowDefinitions>
+                <TextBlock Text="Cộng trước thuế" HorizontalAlignment="Right" Margin="0,2,16,2"/>
+                <TextBlock x:Name="SubtotalText" Grid.Column="1" HorizontalAlignment="Right"/>
+                <TextBlock x:Name="VatLabel" Grid.Row="1" Text="VAT" HorizontalAlignment="Right" Margin="0,2,16,2"/>
+                <TextBlock x:Name="VatText" Grid.Row="1" Grid.Column="1" HorizontalAlignment="Right"/>
+                <TextBlock Grid.Row="2" Text="TỔNG CỘNG" FontWeight="Bold" FontSize="18" HorizontalAlignment="Right" Margin="0,4,16,0"/>
+                <TextBlock x:Name="TotalText" Grid.Row="2" Grid.Column="1" FontWeight="Bold" FontSize="18" HorizontalAlignment="Right" Margin="0,4,0,0"/>
+            </Grid>
+
+            <TextBlock x:Name="ErrorText" DockPanel.Dock="Bottom" Foreground="#B00020" TextWrapping="Wrap" Margin="0,8,0,0"/>
+
+            <DataGrid x:Name="LinesGrid" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column"
+                      GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="#EEE" Background="White" BorderBrush="#DDD">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="Nhóm" Binding="{Binding Group}" Width="90"/>
+                    <DataGridTextColumn Header="Hạng mục" Binding="{Binding Name}" Width="*"/>
+                    <DataGridTextColumn Header="Đơn giá" Binding="{Binding UnitPrice}" Width="120">
+                        <DataGridTextColumn.ElementStyle><Style TargetType="TextBlock"><Setter Property="HorizontalAlignment" Value="Right"/></Style></DataGridTextColumn.ElementStyle>
+                    </DataGridTextColumn>
+                    <DataGridTextColumn Header="SL" Binding="{Binding Quantity}" Width="80"/>
+                    <DataGridTextColumn Header="Thành tiền" Binding="{Binding Amount}" Width="130">
+                        <DataGridTextColumn.ElementStyle><Style TargetType="TextBlock"><Setter Property="HorizontalAlignment" Value="Right"/></Style></DataGridTextColumn.ElementStyle>
+                    </DataGridTextColumn>
+                </DataGrid.Columns>
+            </DataGrid>
+        </DockPanel>
+    </Grid>
+</Window>

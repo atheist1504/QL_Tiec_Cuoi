@@ -18,6 +18,8 @@
             </ComboBox>
             <Button Content="Xem lịch" Padding="16,4" Margin="16,0,0,0" Click="Load_Click"/>
             <Button Content="Tuần sau ›" Padding="12,4" Margin="8,0,0,0" Click="Next_Click"/>
+            <Button Content="Báo giá mới" Padding="12,4" Margin="24,0,0,0" Click="NewQuote_Click"/>
+            <Button Content="Thực đơn &amp; dịch vụ" Padding="12,4" Margin="8,0,0,0" Click="Catalog_Click"/>
         </StackPanel>
 
         <!-- Chú thích màu -->
@@ -28,7 +30,7 @@
             <TextBlock Text="Đang giữ chỗ" Margin="6,0,16,0"/>
             <Border Background="#F8D7DA" Width="16" Height="16" CornerRadius="3"/>
             <TextBlock Text="Đã đặt cọc" Margin="6,0,16,0"/>
-            <TextBlock Text="· Bấm vào ô để giữ sảnh hoặc hủy giữ chỗ" Foreground="Gray"/>
+            <TextBlock Text="· Bấm ô trống để giữ sảnh; bấm ô đang giữ để lập báo giá hoặc hủy giữ chỗ" Foreground="Gray"/>
         </StackPanel>
 
         <!-- Thanh trạng thái -->

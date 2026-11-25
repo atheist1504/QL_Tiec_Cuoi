@@ -5,16 +5,16 @@ using QLTiecCuoi.Shared;
 
 namespace QLTiecCuoi.Api.Controllers;
 
-/// <summary>Đổi BookingException thành mã HTTP phù hợp (404, 409, 400).</summary>
-public class BookingExceptionFilter : IExceptionFilter
+/// <summary>Đổi AppException thành mã HTTP phù hợp (404, 409, 400).</summary>
+public class AppExceptionFilter : IExceptionFilter
 {
     public void OnException(ExceptionContext context)
     {
-        if (context.Exception is not BookingException ex) return;
+        if (context.Exception is not AppException ex) return;
         var status = ex.Kind switch
         {
-            BookingErrorKind.NotFound => StatusCodes.Status404NotFound,
-            BookingErrorKind.Conflict => StatusCodes.Status409Conflict,
+            ErrorKind.NotFound => StatusCodes.Status404NotFound,
+            ErrorKind.Conflict => StatusCodes.Status409Conflict,
             _ => StatusCodes.Status400BadRequest,
         };
         context.Result = new ObjectResult(new ErrorDto(ex.Message)) { StatusCode = status };

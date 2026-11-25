@@ -46,11 +46,23 @@ dotnet test
 
 - [x] Lịch sảnh theo ca (trưa, tối), giữ sảnh tạm 48 giờ, hủy giữ chỗ
 - [x] Chống trùng sảnh: kiểm tra ở service + chỉ mục UNIQUE `(HallId, EventDate, Shift)` cho lượt chưa hủy
-- [ ] Thực đơn, dịch vụ, báo giá
+- [x] Danh mục thực đơn (giá theo bàn) và dịch vụ, thêm/sửa/ngừng bán
+- [x] Báo giá: tiền sảnh + thực đơn × số bàn + dịch vụ + VAT 10%, xem trước, lưu với giá tại thời điểm lập
+- [ ] Xuất báo giá PDF
 - [ ] Hợp đồng, đặt cọc
 - [ ] Thanh lý hợp đồng
 - [ ] Báo cáo doanh thu mùa cưới
 - [ ] Chatbot AI (Claude API)
+
+## Tài liệu quản lý dự án
+
+- `docs/pm/jira-backlog.csv`: backlog để nhập vào Jira (*Project settings → External system import → CSV*). Nhánh WBS cấp 1 là Epic, gói công việc là Task; `Original Estimate` tính bằng giây.
+- `docs/pm/wbs-msproject.csv`: danh sách công việc để mở bằng MS Project (*File → Open → CSV → Import Wizard*). Ngày theo dạng dd/MM/yyyy.
+- Sửa WBS trong `docs/pm/export-wbs.ps1` rồi chạy lại để sinh lại hai file trên:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File docs\pm\export-wbs.ps1
+```
 
 ## Bảo mật
 
