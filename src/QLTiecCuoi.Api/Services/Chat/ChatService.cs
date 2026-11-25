@@ -1,51 +1,45 @@
 using System.Collections.Concurrent;
 using System.Globalization;
 using System.Text.Json;
-using Anthropic;
-using Anthropic.Models.Beta.Messages;
 using QLTiecCuoi.Shared;
 
 namespace QLTiecCuoi.Api.Services.Chat;
 
 public class ChatOptions
 {
-    /// <summary>Model Claude dùng cho chatbot.</summary>
-    public string Model { get; set; } = "claude-opus-5-5";
+    /// <summary>Nhà cung cấp: "Gemini" (mặc định), "Claude" hoặc "OpenAICompatible" (Groq, OpenRouter, Ollama...).</summary>
+    public string Provider { get; set; } = "Gemini";
 
-    /// <summary>Mức effort: low, medium, high. Chatbot tra cứu dùng medium.</summary>
-    public string Effort { get; set; } = "medium";
+    /// <summary>Tên model; bỏ trống thì dùng mặc định của nhà cung cấp.</summary>
+    public string? Model { get; set; }
 
-    /// <summary>Số lần gọi model tối đa cho một câu hỏi (mỗi lần có thể gọi nhiều tool).</summary>
+    /// <summary>Địa chỉ API chuẩn OpenAI (chỉ dùng cho Gemini/OpenAICompatible); bỏ trống = Gemini.</summary>
+    public string? BaseUrl { get; set; }
+
+    /// <summary>Mức suy nghĩ (low, medium, high). Bỏ trống = mặc định của model.</summary>
+    public string? Effort { get; set; }
+
+    /// <summary>Cho phép chạy không cần API key (ví dụ Ollama trên máy).</summary>
+    public bool AllowNoApiKey { get; set; }
+
+    /// <summary>Số lần gọi model tối đa cho một câu hỏi (mỗi lần có thể gọi nhiều công cụ).</summary>
     public int MaxSteps { get; set; } = 8;
 
     /// <summary>Hội thoại không dùng quá số phút này thì bị xóa khỏi bộ nhớ.</summary>
     public int ConversationTtlMinutes { get; set; } = 120;
 }
 
-/// <summary>Gửi yêu cầu tới Claude. Tách ra interface để kiểm thử không cần gọi API thật.</summary>
-public interface IChatModel
-{
-    bool IsConfigured { get; }
-    Task<BetaMessage> SendAsync(MessageCreateParams request);
-}
-
-public class ClaudeChatModel(AnthropicClient client, bool configured) : IChatModel
-{
-    public bool IsConfigured => configured;
-    public Task<BetaMessage> SendAsync(MessageCreateParams request) => client.Beta.Messages.Create(request);
-}
-
-/// <summary>Một lời gọi tool trong lượt đang chờ: đã có kết quả (tool đọc) hoặc chờ xác nhận (tool ghi).</summary>
-internal record ToolCall(string ToolUseId, string Name, IReadOnlyDictionary<string, JsonElement> Input)
+/// <summary>Một lời gọi công cụ trong lượt đang chờ: đã có kết quả (công cụ đọc) hoặc chờ xác nhận (công cụ ghi).</summary>
+internal record ToolCall(ChatToolRequest Request)
 {
     public string? Result { get; set; }
     public bool IsError { get; set; }
 }
 
-internal class ChatConversation(string id)
+internal class ChatConversation(string id, IChatSession session)
 {
     public string Id { get; } = id;
-    public List<BetaMessageParam> Messages { get; } = [];
+    public IChatSession Session { get; } = session;
     public List<ToolCall>? Pending { get; set; }
     public DateTime LastUsed { get; set; }
     public SemaphoreSlim Lock { get; } = new(1, 1);
@@ -56,12 +50,12 @@ public class ChatConversationStore
 {
     private readonly ConcurrentDictionary<string, ChatConversation> _items = new();
 
-    internal ChatConversation GetOrCreate(string? id, DateTime now, TimeSpan ttl)
+    internal ChatConversation GetOrCreate(string? id, Func<IChatSession> newSession, DateTime now, TimeSpan ttl)
     {
         foreach (var old in _items.Values.Where(c => now - c.LastUsed > ttl).ToList())
             _items.TryRemove(old.Id, out _);
         if (id is not null && _items.TryGetValue(id, out var existing)) return existing;
-        var c = new ChatConversation(Guid.NewGuid().ToString("N")) { LastUsed = now };
+        var c = new ChatConversation(Guid.NewGuid().ToString("N"), newSession()) { LastUsed = now };
         _items[c.Id] = c;
         return c;
     }
@@ -72,9 +66,9 @@ public class ChatConversationStore
 }
 
 /// <summary>
-/// Chatbot trợ lý kinh doanh (UC07): Claude trả lời bằng tiếng Việt, tra cứu qua các tool đọc;
-/// tool ghi (giữ sảnh, lưu báo giá) dừng lại chờ nhân viên xác nhận rồi mới chạy.
-/// Hội thoại chỉ được nối thêm (append-only), không sửa lượt cũ.
+/// Chatbot trợ lý kinh doanh (UC07). Model trả lời bằng tiếng Việt, tra cứu qua các công cụ đọc;
+/// công cụ ghi (giữ sảnh, lưu báo giá) dừng lại chờ nhân viên xác nhận rồi mới chạy.
+/// Không phụ thuộc nhà cung cấp LLM: xem IChatModel.
 /// </summary>
 public class ChatService(IChatModel model, ChatTools tools, ChatConversationStore store, ChatOptions options, TimeProvider clock)
 {
@@ -85,20 +79,20 @@ public class ChatService(IChatModel model, ChatTools tools, ChatConversationStor
     {
         if (!model.IsConfigured)
             throw new AppException(ErrorKind.Unavailable,
-                "Chatbot chưa được cấu hình API key của Claude. Xem hướng dẫn trong README (mục Chatbot).");
+                $"Chatbot chưa được cấu hình API key cho {model.DisplayName}. Xem hướng dẫn trong README (mục Chatbot).");
         var text = req.Message?.Trim() ?? "";
         if (text.Length == 0) throw new AppException(ErrorKind.Validation, "Vui lòng nhập câu hỏi.");
         if (text.Length > MaxMessageLength) throw new AppException(ErrorKind.Validation, $"Câu hỏi tối đa {MaxMessageLength} ký tự.");
 
-        var conv = store.GetOrCreate(req.ConversationId, Now, TimeSpan.FromMinutes(options.ConversationTtlMinutes));
+        var conv = store.GetOrCreate(req.ConversationId, model.NewSession, Now, TimeSpan.FromMinutes(options.ConversationTtlMinutes));
         await conv.Lock.WaitAsync();
         try
         {
             if (conv.Pending is not null)
                 throw new AppException(ErrorKind.Conflict, "Hãy xác nhận hoặc từ chối thao tác chatbot đang đề xuất trước khi hỏi tiếp.");
             conv.LastUsed = Now;
-            conv.Messages.Add(new BetaUserMessageParam { Content = text });
-            return await RunAsync(conv, [], []);
+            conv.Session.AddUser(text);
+            return await RunAsync(conv, []);
         }
         finally
         {
@@ -120,8 +114,8 @@ public class ChatService(IChatModel model, ChatTools tools, ChatConversationStor
             {
                 if (approve)
                 {
-                    (call.Result, call.IsError) = await tools.ExecuteAsync(call.Name, call.Input);
-                    used.Add(call.Name);
+                    (call.Result, call.IsError) = await tools.ExecuteAsync(call.Request.Name, call.Request.Input!);
+                    used.Add(call.Request.Name);
                 }
                 else
                 {
@@ -130,8 +124,8 @@ public class ChatService(IChatModel model, ChatTools tools, ChatConversationStor
             }
             conv.Pending = null;
             conv.LastUsed = Now;
-            conv.Messages.Add(ToolResults(pending));
-            return await RunAsync(conv, used, []);
+            conv.Session.AddToolResults(Outputs(pending));
+            return await RunAsync(conv, used);
         }
         finally
         {
@@ -139,38 +133,42 @@ public class ChatService(IChatModel model, ChatTools tools, ChatConversationStor
         }
     }
 
-    private async Task<ChatReplyDto> RunAsync(ChatConversation conv, List<string> toolsUsed, List<string> texts)
+    private async Task<ChatReplyDto> RunAsync(ChatConversation conv, List<string> toolsUsed)
     {
+        var texts = new List<string>();
         for (var step = 0; step < options.MaxSteps; step++)
         {
-            BetaMessage resp;
+            ModelTurn turn;
             try
             {
-                resp = await model.SendAsync(BuildRequest(conv.Messages));
+                turn = await conv.Session.NextAsync(SystemPrompt(), ChatTools.Specs);
             }
-            catch (Exception ex) when (ex.GetType().Namespace?.StartsWith("Anthropic", StringComparison.Ordinal) == true
-                                       || ex is HttpRequestException or TaskCanceledException)
+            catch (ChatModelException ex)
             {
-                // Bỏ câu hỏi chưa trả lời được để hội thoại vẫn hợp lệ ở lượt sau.
+                // Bỏ hội thoại để lượt sau bắt đầu lại sạch (lịch sử có thể đang dở dang).
                 store.Remove(conv.Id);
-                throw new AppException(ErrorKind.Unavailable, $"Không gọi được Claude API ({ex.GetType().Name}). Hãy thử lại sau.");
+                throw new AppException(ErrorKind.Unavailable, ex.Message);
             }
 
-            conv.Messages.Add(new BetaAssistantMessageParam { Content = ToParams(resp.Content) });
-            texts.AddRange(resp.Content.Select(b => b.TryPickText(out var t) ? t.Text : null).OfType<string>());
-
-            if (resp.StopReason == "refusal")
+            if (!string.IsNullOrWhiteSpace(turn.Text)) texts.Add(turn.Text.Trim());
+            if (turn.Refused)
                 return Reply(conv, ["Xin lỗi, mình không hỗ trợ được yêu cầu này. Bạn hỏi về sảnh, thực đơn hoặc báo giá nhé."], toolsUsed, []);
-
-            var uses = resp.Content.Select(b => b.TryPickToolUse(out var u) ? u : null).OfType<BetaToolUseBlock>().ToList();
-            if (uses.Count == 0 || resp.StopReason != "tool_use")
+            if (turn.ToolCalls.Count == 0)
                 return Reply(conv, texts, toolsUsed, []);
 
-            var calls = uses.Select(u => new ToolCall(u.ID, u.Name, u.Input)).ToList();
-            foreach (var call in calls.Where(c => !ChatTools.IsWrite(c.Name)))
+            var calls = turn.ToolCalls.Select(r => new ToolCall(r)).ToList();
+            foreach (var call in calls)
             {
-                (call.Result, call.IsError) = await tools.ExecuteAsync(call.Name, call.Input);
-                toolsUsed.Add(call.Name);
+                if (call.Request.Input is null)
+                {
+                    call.Result = JsonSerializer.Serialize(new { error = "Tham số công cụ không phải JSON hợp lệ." });
+                    call.IsError = true;
+                }
+                else if (!ChatTools.IsWrite(call.Request.Name))
+                {
+                    (call.Result, call.IsError) = await tools.ExecuteAsync(call.Request.Name, call.Request.Input);
+                    toolsUsed.Add(call.Request.Name);
+                }
             }
 
             var writes = calls.Where(c => c.Result is null).ToList();
@@ -178,40 +176,22 @@ public class ChatService(IChatModel model, ChatTools tools, ChatConversationStor
             {
                 conv.Pending = calls;
                 var actions = new List<ChatPendingActionDto>();
-                foreach (var w in writes) actions.Add(await tools.DescribeAsync(w.Name, w.Input));
+                foreach (var w in writes) actions.Add(await tools.DescribeAsync(w.Request.Name, w.Request.Input!));
                 return Reply(conv, texts, toolsUsed, actions);
             }
 
-            conv.Messages.Add(ToolResults(calls));
+            conv.Session.AddToolResults(Outputs(calls));
         }
 
-        // Quá số bước: bỏ hội thoại để lượt sau bắt đầu sạch.
         store.Remove(conv.Id);
         return new ChatReplyDto("", "Câu hỏi cần quá nhiều bước tra cứu. Bạn hỏi ngắn gọn, cụ thể hơn giúp mình nhé.", [], toolsUsed);
     }
 
+    private static List<ChatToolOutput> Outputs(List<ToolCall> calls) =>
+        calls.Select(c => new ChatToolOutput(c.Request.Id, c.Request.Name, c.Result ?? "{}", c.IsError)).ToList();
+
     private static ChatReplyDto Reply(ChatConversation conv, List<string> texts, List<string> toolsUsed, List<ChatPendingActionDto> actions) =>
-        new(conv.Id, string.Join("\n\n", texts.Where(t => !string.IsNullOrWhiteSpace(t))).Trim(), actions, toolsUsed);
-
-    private MessageCreateParams BuildRequest(List<BetaMessageParam> messages) => new()
-    {
-        Model = options.Model,
-        MaxTokens = 16000,
-        System = SystemPrompt(),
-        Messages = [.. messages],
-        Tools = [.. ToolDefinitions],
-        OutputConfig = new BetaOutputConfig { Effort = ParseEffort(options.Effort) },
-        // Bị bộ lọc an toàn từ chối nhầm thì server tự chuyển sang model dự phòng phù hợp.
-        Betas = ["server-side-fallback-2026-07-01"],
-        Fallbacks = new Default(),
-    };
-
-    private static Effort ParseEffort(string value) => value.ToLowerInvariant() switch
-    {
-        "low" => Effort.Low,
-        "high" => Effort.High,
-        _ => Effort.Medium,
-    };
+        new(conv.Id, string.Join("\n\n", texts).Trim(), actions, toolsUsed);
 
     private string SystemPrompt()
     {
@@ -234,43 +214,5 @@ public class ChatService(IChatModel model, ChatTools tools, ChatConversationStor
             - Trả lời ngắn gọn, đi thẳng vào kết quả. Viết tiền dạng 30.000.000 đ. Không dùng bảng markdown; liệt kê bằng gạch đầu dòng khi có nhiều mục.
             - Ngoài phạm vi nhà hàng tiệc cưới thì lịch sự từ chối.
             """;
-    }
-
-    private static readonly List<BetaToolUnion> ToolDefinitions = ChatTools.Specs
-        .Select(s => (BetaToolUnion)new BetaTool
-        {
-            Name = s.Name,
-            Description = s.Description,
-            InputSchema = new()
-            {
-                Properties = s.Properties.ToDictionary(p => p.Key, p => JsonSerializer.SerializeToElement(p.Value)),
-                Required = [.. s.Required],
-            },
-        })
-        .ToList();
-
-    private static BetaUserMessageParam ToolResults(List<ToolCall> calls) => new()
-    {
-        Content = calls.Select(c => (BetaContentBlockParam)new BetaToolResultBlockParam
-        {
-            ToolUseID = c.ToolUseId,
-            Content = c.Result ?? "{}",
-            IsError = c.IsError,
-        }).ToList(),
-    };
-
-    /// <summary>Chuyển nội dung trả về thành tham số để gửi lại nguyên vẹn ở lượt sau (giữ chữ ký của thinking).</summary>
-    private static List<BetaContentBlockParam> ToParams(IReadOnlyList<BetaContentBlock> blocks)
-    {
-        var list = new List<BetaContentBlockParam>();
-        foreach (var b in blocks)
-        {
-            if (b.TryPickText(out var t)) list.Add(new BetaTextBlockParam { Text = t.Text });
-            else if (b.TryPickThinking(out var th)) list.Add(new BetaThinkingBlockParam { Thinking = th.Thinking, Signature = th.Signature });
-            else if (b.TryPickRedactedThinking(out var r)) list.Add(new BetaRedactedThinkingBlockParam { Data = r.Data });
-            else if (b.TryPickToolUse(out var u)) list.Add(new BetaToolUseBlockParam { ID = u.ID, Name = u.Name, Input = u.Input });
-            else list.Add(new BetaContentBlockParam(b.Json)); // khối khác (ví dụ thông tin fallback): gửi lại nguyên JSON
-        }
-        return list;
     }
 }

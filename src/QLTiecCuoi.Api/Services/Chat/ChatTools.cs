@@ -42,7 +42,6 @@ public class ChatTools(BookingService bookings, CatalogService catalog, QuoteSer
                 quantity = new { type = "integer", description = "Số lượng, lớn hơn 0" },
             },
             required = new[] { "service_item_id", "quantity" },
-            additionalProperties = false,
         },
     };
 
