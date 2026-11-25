@@ -48,8 +48,8 @@ dotnet test
 - [x] Chống trùng sảnh: kiểm tra ở service + chỉ mục UNIQUE `(HallId, EventDate, Shift)` cho lượt chưa hủy
 - [x] Danh mục thực đơn (giá theo bàn) và dịch vụ, thêm/sửa/ngừng bán
 - [x] Báo giá: tiền sảnh + thực đơn × số bàn + dịch vụ + VAT 10%, xem trước, lưu với giá tại thời điểm lập
-- [ ] Xuất báo giá PDF
-- [ ] Hợp đồng, đặt cọc
+- [x] Xuất báo giá PDF
+- [x] Hợp đồng lập từ báo giá, ghi nhận đặt cọc (mặc định 30%), đủ cọc thì chốt sảnh; xuất hợp đồng PDF (QuestPDF)
 - [ ] Thanh lý hợp đồng
 - [ ] Báo cáo doanh thu mùa cưới
 - [ ] Chatbot AI (Claude API)

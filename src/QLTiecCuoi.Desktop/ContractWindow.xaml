@@ -1,0 +1,80 @@
+<Window x:Class="QLTiecCuoi.Desktop.ContractWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Hợp đồng" Height="640" Width="820"
+        WindowStartupLocation="CenterOwner" FontSize="14">
+    <DockPanel Margin="16">
+        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal">
+            <TextBlock x:Name="CodeText" FontSize="20" FontWeight="SemiBold"/>
+            <Border x:Name="StatusBadge" Margin="12,0,0,0" Padding="10,3" CornerRadius="10" VerticalAlignment="Center">
+                <TextBlock x:Name="StatusText" FontWeight="SemiBold"/>
+            </Border>
+        </StackPanel>
+
+        <!-- Thông tin hợp đồng -->
+        <Grid DockPanel.Dock="Top" Margin="0,12,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="130"/><ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="130"/><ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/>
+            </Grid.RowDefinitions>
+            <TextBlock Text="Khách hàng" Foreground="Gray"/>
+            <TextBlock x:Name="CustomerText" Grid.Column="1" TextWrapping="Wrap"/>
+            <TextBlock Grid.Column="2" Text="Giá trị hợp đồng" Foreground="Gray"/>
+            <TextBlock x:Name="TotalText" Grid.Column="3" FontWeight="SemiBold"/>
+            <TextBlock Grid.Row="1" Text="Tiệc" Foreground="Gray" Margin="0,4,0,0"/>
+            <TextBlock x:Name="EventText" Grid.Row="1" Grid.Column="1" TextWrapping="Wrap" Margin="0,4,0,0"/>
+            <TextBlock Grid.Row="1" Grid.Column="2" Text="Cọc yêu cầu" Foreground="Gray" Margin="0,4,0,0"/>
+            <TextBlock x:Name="DepositText" Grid.Row="1" Grid.Column="3" Margin="0,4,0,0"/>
+            <TextBlock Grid.Row="2" Text="Địa chỉ" Foreground="Gray" Margin="0,4,0,0"/>
+            <TextBlock x:Name="AddressText" Grid.Row="2" Grid.Column="1" TextWrapping="Wrap" Margin="0,4,0,0"/>
+            <TextBlock Grid.Row="2" Grid.Column="2" Text="Đã thanh toán" Foreground="Gray" Margin="0,4,0,0"/>
+            <TextBlock x:Name="PaidText" Grid.Row="2" Grid.Column="3" Margin="0,4,0,0"/>
+            <TextBlock Grid.Row="3" Grid.Column="2" Text="Còn lại" Foreground="Gray" Margin="0,4,0,0"/>
+            <TextBlock x:Name="RemainingText" Grid.Row="3" Grid.Column="3" Margin="0,4,0,0"/>
+        </Grid>
+
+        <Border x:Name="HoldBanner" DockPanel.Dock="Top" Margin="0,12,0,0" Padding="10,6" CornerRadius="4" Background="#FFF1C9">
+            <TextBlock x:Name="HoldText" TextWrapping="Wrap"/>
+        </Border>
+
+        <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,12,0,0">
+            <Button Content="Xuất PDF hợp đồng" Padding="14,6" Click="Pdf_Click"/>
+            <Button x:Name="CancelButton" Content="Hủy hợp đồng" Padding="14,6" Margin="8,0,0,0" Click="Cancel_Click"/>
+            <Button Content="Đóng" Padding="14,6" Margin="8,0,0,0" IsCancel="True"/>
+        </StackPanel>
+
+        <!-- Ghi nhận thanh toán -->
+        <GroupBox x:Name="PayBox" DockPanel.Dock="Bottom" Header="Ghi nhận khách trả tiền (đặt cọc)" Margin="0,12,0,0" Padding="8">
+            <StackPanel>
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="Số tiền (đ)" VerticalAlignment="Center" Width="90"/>
+                    <TextBox x:Name="AmountBox" Width="160" Padding="3" TextAlignment="Right"/>
+                    <TextBlock Text="Hình thức" VerticalAlignment="Center" Margin="16,0,8,0"/>
+                    <ComboBox x:Name="MethodBox" Width="140"/>
+                    <TextBlock Text="Ghi chú" VerticalAlignment="Center" Margin="16,0,8,0"/>
+                    <TextBox x:Name="PayNoteBox" Width="170" Padding="3"/>
+                </StackPanel>
+                <DockPanel Margin="0,8,0,0">
+                    <Button x:Name="PayButton" DockPanel.Dock="Right" Content="Ghi nhận" Padding="16,4" Click="Pay_Click"/>
+                    <TextBlock x:Name="PayError" Foreground="#B00020" TextWrapping="Wrap" VerticalAlignment="Center"/>
+                </DockPanel>
+            </StackPanel>
+        </GroupBox>
+
+        <DataGrid x:Name="PaymentsGrid" Margin="0,12,0,0" AutoGenerateColumns="False" IsReadOnly="True"
+                  HeadersVisibility="Column" GridLinesVisibility="Horizontal" HorizontalGridLinesBrush="#EEE" Background="White">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Thời gian" Binding="{Binding When}" Width="140"/>
+                <DataGridTextColumn Header="Loại" Binding="{Binding Kind}" Width="110"/>
+                <DataGridTextColumn Header="Số tiền" Binding="{Binding Amount}" Width="130">
+                    <DataGridTextColumn.ElementStyle><Style TargetType="TextBlock"><Setter Property="HorizontalAlignment" Value="Right"/></Style></DataGridTextColumn.ElementStyle>
+                </DataGridTextColumn>
+                <DataGridTextColumn Header="Hình thức" Binding="{Binding Method}" Width="120"/>
+                <DataGridTextColumn Header="Ghi chú" Binding="{Binding Note}" Width="*"/>
+            </DataGrid.Columns>
+        </DataGrid>
+    </DockPanel>
+</Window>

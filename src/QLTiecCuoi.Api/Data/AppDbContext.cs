@@ -10,6 +10,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<MenuItem> MenuItems => Set<MenuItem>();
     public DbSet<ServiceItem> ServiceItems => Set<ServiceItem>();
     public DbSet<Quote> Quotes => Set<Quote>();
+    public DbSet<Contract> Contracts => Set<Contract>();
+    public DbSet<Payment> Payments => Set<Payment>();
 
     protected override void OnModelCreating(ModelBuilder b)
     {
@@ -83,6 +85,33 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             e.HasMany(x => x.Lines).WithOne().HasForeignKey(x => x.QuoteId).OnDelete(DeleteBehavior.Cascade);
             e.HasOne(x => x.Booking).WithMany().HasForeignKey(x => x.BookingId).OnDelete(DeleteBehavior.Restrict);
             e.HasIndex(x => x.CustomerPhone);
+        });
+
+        b.Entity<Contract>(e =>
+        {
+            e.Property(x => x.Code).HasMaxLength(30).IsRequired();
+            e.HasIndex(x => x.Code).IsUnique();
+            e.Property(x => x.CustomerName).HasMaxLength(100).IsRequired();
+            e.Property(x => x.CustomerPhone).HasMaxLength(20).IsRequired();
+            e.Property(x => x.CustomerAddress).HasMaxLength(250);
+            e.Property(x => x.CustomerIdNumber).HasMaxLength(20);
+            e.Property(x => x.Note).HasMaxLength(500);
+            e.Property(x => x.Total).HasPrecision(18, 0);
+            e.Property(x => x.DepositRequired).HasPrecision(18, 0);
+            e.Property(x => x.DepositPercent).HasPrecision(5, 2);
+            e.HasOne(x => x.Booking).WithMany().HasForeignKey(x => x.BookingId).OnDelete(DeleteBehavior.Restrict);
+            e.HasOne(x => x.Quote).WithMany().HasForeignKey(x => x.QuoteId).OnDelete(DeleteBehavior.Restrict);
+            e.HasMany(x => x.Payments).WithOne().HasForeignKey(x => x.ContractId).OnDelete(DeleteBehavior.Cascade);
+            // Mỗi lượt đặt sảnh chỉ có một hợp đồng còn hiệu lực.
+            e.HasIndex(x => x.BookingId).IsUnique()
+                .HasFilter($"[Status] <> {(int)ContractStatus.Cancelled}")
+                .HasDatabaseName("UX_Contract_ActiveBooking");
+        });
+
+        b.Entity<Payment>(e =>
+        {
+            e.Property(x => x.Amount).HasPrecision(18, 0);
+            e.Property(x => x.Note).HasMaxLength(250);
         });
 
         b.Entity<QuoteLine>(e =>

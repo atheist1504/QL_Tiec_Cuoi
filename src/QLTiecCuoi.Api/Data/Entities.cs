@@ -75,6 +75,42 @@ public class Quote
     public List<QuoteLine> Lines { get; set; } = [];
 }
 
+/// <summary>
+/// Hợp đồng lập từ một báo giá đã gắn với lượt giữ sảnh. Giá trị hợp đồng lấy
+/// từ báo giá (báo giá không đổi sau khi lưu). Đủ cọc thì sảnh chuyển sang "đã cọc".
+/// </summary>
+public class Contract
+{
+    public int Id { get; set; }
+    public string Code { get; set; } = "";
+    public ContractStatus Status { get; set; }
+    public int BookingId { get; set; }
+    public Booking Booking { get; set; } = null!;
+    public int QuoteId { get; set; }
+    public Quote Quote { get; set; } = null!;
+    public string CustomerName { get; set; } = "";
+    public string CustomerPhone { get; set; } = "";
+    public string? CustomerAddress { get; set; }
+    public string? CustomerIdNumber { get; set; }
+    public decimal Total { get; set; }
+    public decimal DepositPercent { get; set; }
+    public decimal DepositRequired { get; set; }
+    public string? Note { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public List<Payment> Payments { get; set; } = [];
+}
+
+public class Payment
+{
+    public int Id { get; set; }
+    public int ContractId { get; set; }
+    public PaymentKind Kind { get; set; }
+    public decimal Amount { get; set; }
+    public PaymentMethod Method { get; set; }
+    public DateTime PaidAt { get; set; }
+    public string? Note { get; set; }
+}
+
 public enum QuoteLineKind { Menu = 1, Service = 2 }
 
 public class QuoteLine

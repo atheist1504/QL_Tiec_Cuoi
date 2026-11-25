@@ -61,6 +61,42 @@ public class ApiClient
 
     public Task<QuoteDto> CreateQuoteAsync(QuoteRequest req) => SendAsync<QuoteDto>(HttpMethod.Post, "api/quotes", req);
 
+    public Task<List<QuoteSummaryDto>> ListQuotesAsync(int bookingId) => GetAsync<List<QuoteSummaryDto>>($"api/quotes?bookingId={bookingId}");
+
+    public Task<List<ContractDto>> ListContractsAsync(int bookingId) => GetAsync<List<ContractDto>>($"api/contracts?bookingId={bookingId}");
+
+    public Task<ContractDto> GetContractAsync(int id) => GetAsync<ContractDto>($"api/contracts/{id}");
+
+    public Task<ContractDto> CreateContractAsync(CreateContractRequest req) => SendAsync<ContractDto>(HttpMethod.Post, "api/contracts", req);
+
+    public Task<ContractDto> PayAsync(int contractId, PaymentRequest req) =>
+        SendAsync<ContractDto>(HttpMethod.Post, $"api/contracts/{contractId}/payments", req);
+
+    public Task<ContractDto> CancelContractAsync(int id) => SendAsync<ContractDto>(HttpMethod.Post, $"api/contracts/{id}/cancel", null);
+
+    public Task<byte[]> QuotePdfAsync(int quoteId) => GetBytesAsync($"api/quotes/{quoteId}/pdf");
+
+    public Task<byte[]> ContractPdfAsync(int contractId) => GetBytesAsync($"api/contracts/{contractId}/pdf");
+
+    private async Task<byte[]> GetBytesAsync(string path)
+    {
+        HttpResponseMessage res;
+        try
+        {
+            res = await _http.GetAsync(path);
+        }
+        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException)
+        {
+            throw new ApiException(HttpStatusCode.ServiceUnavailable, $"Không kết nối được máy chủ API ({BaseUrl}).");
+        }
+        using (res)
+        {
+            if (res.IsSuccessStatusCode) return await res.Content.ReadAsByteArrayAsync();
+            var err = await res.Content.ReadFromJsonAsync<ErrorDto>(Json);
+            throw new ApiException(res.StatusCode, err?.Message ?? $"Lỗi máy chủ ({(int)res.StatusCode}).");
+        }
+    }
+
     private Task<T> GetAsync<T>(string path) => SendAsync<T>(HttpMethod.Get, path, null);
 
     private async Task<T> SendAsync<T>(HttpMethod method, string path, object? body)

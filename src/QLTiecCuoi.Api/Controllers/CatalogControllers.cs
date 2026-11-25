@@ -34,8 +34,16 @@ public class ServiceItemsController(CatalogService service) : ControllerBase
 
 [ApiController]
 [Route("api/quotes")]
-public class QuotesController(QuoteService service) : ControllerBase
+public class QuotesController(QuoteService service, PdfService pdf) : ControllerBase
 {
+    /// <summary>Tải báo giá dạng PDF để gửi khách.</summary>
+    [HttpGet("{id:int}/pdf")]
+    public async Task<IActionResult> Pdf(int id)
+    {
+        var (bytes, name) = await pdf.QuotePdfAsync(id);
+        return File(bytes, "application/pdf", name);
+    }
+
     /// <summary>Tính thử báo giá, không lưu.</summary>
     [HttpPost("preview")]
     public Task<QuoteDto> Preview(QuoteRequest req) => service.PreviewAsync(req);

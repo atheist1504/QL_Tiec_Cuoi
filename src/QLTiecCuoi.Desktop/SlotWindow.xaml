@@ -1,0 +1,45 @@
+<Window x:Class="QLTiecCuoi.Desktop.SlotWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Lượt đặt sảnh" SizeToContent="Height" Width="520"
+        WindowStartupLocation="CenterOwner" ResizeMode="NoResize" FontSize="14">
+    <StackPanel Margin="20">
+        <TextBlock x:Name="HeaderText" FontSize="17" FontWeight="SemiBold" TextWrapping="Wrap"/>
+        <TextBlock x:Name="CustomerText" Margin="0,8,0,0" TextWrapping="Wrap"/>
+        <TextBlock x:Name="HoldText" Margin="0,4,0,0" Foreground="Gray" TextWrapping="Wrap"/>
+
+        <TextBlock Text="Báo giá" FontWeight="SemiBold" Margin="0,16,0,4"/>
+        <TextBlock x:Name="QuoteText" TextWrapping="Wrap"/>
+        <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+            <Button x:Name="NewQuoteButton" Content="Lập báo giá" Padding="12,4" Click="NewQuote_Click"/>
+            <Button x:Name="QuotePdfButton" Content="PDF báo giá mới nhất" Padding="12,4" Margin="8,0,0,0" Click="QuotePdf_Click"/>
+        </StackPanel>
+
+        <TextBlock Text="Hợp đồng" FontWeight="SemiBold" Margin="0,16,0,4"/>
+        <TextBlock x:Name="ContractText" TextWrapping="Wrap"/>
+        <Grid x:Name="NewContractForm" Margin="0,6,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="110"/><ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition/><RowDefinition/><RowDefinition/>
+            </Grid.RowDefinitions>
+            <TextBlock Text="Địa chỉ khách" VerticalAlignment="Center"/>
+            <TextBox x:Name="AddressBox" Grid.Column="1" Margin="0,2" Padding="3"/>
+            <TextBlock Grid.Row="1" Text="Số CCCD" VerticalAlignment="Center"/>
+            <TextBox x:Name="IdBox" Grid.Row="1" Grid.Column="1" Margin="0,2" Padding="3"/>
+            <TextBlock Grid.Row="2" Text="Ghi chú" VerticalAlignment="Center"/>
+            <TextBox x:Name="ContractNoteBox" Grid.Row="2" Grid.Column="1" Margin="0,2" Padding="3"/>
+        </Grid>
+        <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+            <Button x:Name="ContractButton" Content="Lập hợp đồng" Padding="12,4" Click="Contract_Click"/>
+        </StackPanel>
+
+        <TextBlock x:Name="ErrorText" Foreground="#B00020" TextWrapping="Wrap" Margin="0,12,0,0"/>
+
+        <DockPanel Margin="0,16,0,0">
+            <Button x:Name="CancelHoldButton" DockPanel.Dock="Left" Content="Hủy giữ chỗ" Padding="12,4" Click="CancelHold_Click"/>
+            <Button Content="Đóng" Padding="16,4" HorizontalAlignment="Right" IsCancel="True"/>
+        </DockPanel>
+    </StackPanel>
+</Window>

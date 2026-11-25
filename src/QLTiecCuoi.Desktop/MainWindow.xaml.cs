@@ -136,34 +136,11 @@ public partial class MainWindow : Window
                 break;
 
             case SlotStatus.Held:
-                var ask = MessageBox.Show(this,
-                    $"{hall.Name}, ca {Labels.Of(slot.Shift).ToLower()} ngày {slot.Date:dd/MM/yyyy} đang giữ cho khách {slot.CustomerName}.\n\n" +
-                    "Yes: lập báo giá cho khách này\nNo: hủy giữ chỗ\nCancel: đóng",
-                    "Sảnh đang giữ chỗ", MessageBoxButton.YesNoCancel, MessageBoxImage.Question, MessageBoxResult.Cancel);
-                try
-                {
-                    if (ask == MessageBoxResult.Yes)
-                    {
-                        OpenQuote(Prefill(await _api.GetBookingAsync(slot.BookingId!.Value)));
-                    }
-                    else if (ask == MessageBoxResult.No &&
-                             MessageBox.Show(this, $"Chắc chắn hủy giữ chỗ của khách {slot.CustomerName}?", "Xác nhận hủy",
-                                 MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No) == MessageBoxResult.Yes)
-                    {
-                        await _api.CancelHoldAsync(slot.BookingId!.Value);
-                        await ReloadAsync();
-                    }
-                }
-                catch (ApiException ex)
-                {
-                    MessageBox.Show(this, ex.Message, "Không thực hiện được", MessageBoxButton.OK, MessageBoxImage.Warning);
-                    await ReloadAsync();
-                }
-                break;
-
             case SlotStatus.Deposited:
-                MessageBox.Show(this, $"{hall.Name} đã được khách {slot.CustomerName} đặt cọc.",
-                    "Đã đặt cọc", MessageBoxButton.OK, MessageBoxImage.Information);
+                // Báo giá, hợp đồng, thu cọc, hủy giữ chỗ cho lượt đặt sảnh này.
+                var w = new SlotWindow(_api, _halls, slot.BookingId!.Value) { Owner = this };
+                w.ShowDialog();
+                await ReloadAsync();
                 break;
         }
     }

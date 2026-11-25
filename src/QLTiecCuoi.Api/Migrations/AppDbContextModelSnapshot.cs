@@ -75,6 +75,80 @@ namespace QLTiecCuoi.Api.Migrations
                     b.ToTable("Bookings");
                 });
 
+            modelBuilder.Entity("QLTiecCuoi.Api.Data.Contract", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("BookingId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CustomerAddress")
+                        .HasMaxLength(250)
+                        .HasColumnType("nvarchar(250)");
+
+                    b.Property<string>("CustomerIdNumber")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("CustomerName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("CustomerPhone")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<decimal>("DepositPercent")
+                        .HasPrecision(5, 2)
+                        .HasColumnType("decimal(5,2)");
+
+                    b.Property<decimal>("DepositRequired")
+                        .HasPrecision(18)
+                        .HasColumnType("decimal(18,0)");
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<int>("QuoteId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("Total")
+                        .HasPrecision(18)
+                        .HasColumnType("decimal(18,0)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BookingId")
+                        .IsUnique()
+                        .HasDatabaseName("UX_Contract_ActiveBooking")
+                        .HasFilter("[Status] <> 4");
+
+                    b.HasIndex("Code")
+                        .IsUnique();
+
+                    b.HasIndex("QuoteId");
+
+                    b.ToTable("Contracts");
+                });
+
             modelBuilder.Entity("QLTiecCuoi.Api.Data.Hall", b =>
                 {
                     b.Property<int>("Id")
@@ -253,6 +327,41 @@ namespace QLTiecCuoi.Api.Migrations
                             Name = "Trái cây theo mùa",
                             PricePerTable = 220000m
                         });
+                });
+
+            modelBuilder.Entity("QLTiecCuoi.Api.Data.Payment", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<decimal>("Amount")
+                        .HasPrecision(18)
+                        .HasColumnType("decimal(18,0)");
+
+                    b.Property<int>("ContractId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Kind")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Method")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(250)
+                        .HasColumnType("nvarchar(250)");
+
+                    b.Property<DateTime>("PaidAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ContractId");
+
+                    b.ToTable("Payments");
                 });
 
             modelBuilder.Entity("QLTiecCuoi.Api.Data.Quote", b =>
@@ -476,6 +585,34 @@ namespace QLTiecCuoi.Api.Migrations
                     b.Navigation("Hall");
                 });
 
+            modelBuilder.Entity("QLTiecCuoi.Api.Data.Contract", b =>
+                {
+                    b.HasOne("QLTiecCuoi.Api.Data.Booking", "Booking")
+                        .WithMany()
+                        .HasForeignKey("BookingId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("QLTiecCuoi.Api.Data.Quote", "Quote")
+                        .WithMany()
+                        .HasForeignKey("QuoteId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Booking");
+
+                    b.Navigation("Quote");
+                });
+
+            modelBuilder.Entity("QLTiecCuoi.Api.Data.Payment", b =>
+                {
+                    b.HasOne("QLTiecCuoi.Api.Data.Contract", null)
+                        .WithMany("Payments")
+                        .HasForeignKey("ContractId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("QLTiecCuoi.Api.Data.Quote", b =>
                 {
                     b.HasOne("QLTiecCuoi.Api.Data.Booking", "Booking")
@@ -501,6 +638,11 @@ namespace QLTiecCuoi.Api.Migrations
                         .HasForeignKey("QuoteId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("QLTiecCuoi.Api.Data.Contract", b =>
+                {
+                    b.Navigation("Payments");
                 });
 
             modelBuilder.Entity("QLTiecCuoi.Api.Data.Quote", b =>

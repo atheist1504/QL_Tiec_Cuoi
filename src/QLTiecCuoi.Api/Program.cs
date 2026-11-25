@@ -14,6 +14,10 @@ builder.Services.AddSingleton(builder.Configuration.GetSection("Quote").Get<Quot
 builder.Services.AddScoped<BookingService>();
 builder.Services.AddScoped<CatalogService>();
 builder.Services.AddScoped<QuoteService>();
+builder.Services.AddSingleton(builder.Configuration.GetSection("Contract").Get<ContractOptions>() ?? new ContractOptions());
+builder.Services.AddSingleton(builder.Configuration.GetSection("Restaurant").Get<RestaurantOptions>() ?? new RestaurantOptions());
+builder.Services.AddScoped<ContractService>();
+builder.Services.AddScoped<PdfService>();
 
 builder.Services.AddControllers(o => o.Filters.Add<AppExceptionFilter>())
     .AddJsonOptions(o => o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));

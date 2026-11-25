@@ -122,6 +122,58 @@ public record QuoteDto(
     DateOnly? ValidUntil,
     string? Note);
 
+// ----- Hợp đồng và thanh toán -----
+
+public enum ContractStatus
+{
+    AwaitingDeposit = 1, // Đã lập, chờ đặt cọc
+    Deposited = 2,       // Đã đủ cọc, sảnh được chốt
+    Liquidated = 3,      // Đã thanh lý sau tiệc
+    Cancelled = 4,       // Đã hủy
+}
+
+public enum PaymentMethod
+{
+    Cash = 1,     // Tiền mặt
+    Transfer = 2, // Chuyển khoản
+}
+
+public enum PaymentKind
+{
+    Deposit = 1, // Đặt cọc
+    Final = 2,   // Thanh toán khi thanh lý
+}
+
+public record CreateContractRequest(int QuoteId, string? CustomerAddress, string? CustomerIdNumber, string? Note);
+
+public record PaymentRequest(decimal Amount, PaymentMethod Method, string? Note);
+
+public record PaymentDto(int Id, PaymentKind Kind, decimal Amount, PaymentMethod Method, DateTime PaidAt, string? Note);
+
+public record ContractDto(
+    int Id,
+    string Code,
+    ContractStatus Status,
+    int BookingId,
+    int QuoteId,
+    string CustomerName,
+    string CustomerPhone,
+    string? CustomerAddress,
+    string? CustomerIdNumber,
+    string HallName,
+    DateOnly Date,
+    Shift Shift,
+    int Tables,
+    decimal Total,
+    decimal DepositPercent,
+    decimal DepositRequired,
+    decimal Paid,
+    decimal Remaining,
+    DateTime? HoldExpiresAt,
+    DateTime CreatedAt,
+    string? Note,
+    List<PaymentDto> Payments);
+
 public record QuoteSummaryDto(int Id, string CustomerName, string CustomerPhone, string HallName,
     DateOnly Date, Shift Shift, int Tables, decimal Total, DateTime CreatedAt);
 
@@ -141,6 +193,29 @@ public static class Labels
         MenuCategory.Hotpot => "Lẩu",
         MenuCategory.Dessert => "Tráng miệng",
         _ => c.ToString(),
+    };
+
+    public static string Of(ContractStatus s) => s switch
+    {
+        ContractStatus.AwaitingDeposit => "Chờ đặt cọc",
+        ContractStatus.Deposited => "Đã đặt cọc",
+        ContractStatus.Liquidated => "Đã thanh lý",
+        ContractStatus.Cancelled => "Đã hủy",
+        _ => s.ToString(),
+    };
+
+    public static string Of(PaymentMethod m) => m switch
+    {
+        PaymentMethod.Cash => "Tiền mặt",
+        PaymentMethod.Transfer => "Chuyển khoản",
+        _ => m.ToString(),
+    };
+
+    public static string Of(PaymentKind k) => k switch
+    {
+        PaymentKind.Deposit => "Đặt cọc",
+        PaymentKind.Final => "Thanh toán cuối",
+        _ => k.ToString(),
     };
 
     public static string Money(decimal v) => v.ToString("#,0", System.Globalization.CultureInfo.GetCultureInfo("vi-VN")) + " đ";
