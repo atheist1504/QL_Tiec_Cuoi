@@ -10,6 +10,15 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
+    <!-- Icon của file .exe (Explorer, thanh tác vụ, lối tắt) -->
+    <ApplicationIcon>Assets\app.ico</ApplicationIcon>
+    <AssemblyTitle>Quản lý nhà hàng tiệc cưới</AssemblyTitle>
+    <Product>QL Tiệc Cưới</Product>
   </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Icon góc trái các cửa sổ -->
+    <Resource Include="Assets\app.ico" />
+  </ItemGroup>
 
 </Project>
