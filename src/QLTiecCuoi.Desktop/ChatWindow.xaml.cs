@@ -24,6 +24,7 @@ public partial class ChatWindow : Window
     {
         ["list_halls"] = "danh sách sảnh",
         ["find_available_halls"] = "lịch sảnh trống",
+        ["find_bookings"] = "lượt đặt sảnh",
         ["get_menu_and_services"] = "thực đơn, dịch vụ",
         ["estimate_quote"] = "tính báo giá",
         ["hold_hall"] = "giữ sảnh",
@@ -114,7 +115,7 @@ public partial class ChatWindow : Window
             var meta = reply.ToolsUsed.Count == 0 ? null
                 : "Đã dùng: " + string.Join(", ", reply.ToolsUsed.Distinct().Select(t => ToolNames.GetValueOrDefault(t, t)));
             if (!string.IsNullOrWhiteSpace(reply.Text) || meta is not null)
-                _messages.Add(new ChatBubble(string.IsNullOrWhiteSpace(reply.Text) ? "(không có nội dung)" : reply.Text, false, meta));
+                _messages.Add(new ChatBubble(string.IsNullOrWhiteSpace(reply.Text) ? "(không có nội dung)" : PlainText.FromMarkdown(reply.Text), false, meta));
 
             PendingList.ItemsSource = reply.PendingActions;
             PendingPanel.Visibility = reply.PendingActions.Count > 0 ? Visibility.Visible : Visibility.Collapsed;

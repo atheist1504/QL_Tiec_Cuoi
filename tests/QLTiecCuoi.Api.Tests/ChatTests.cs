@@ -122,6 +122,49 @@ public class ChatTests : IDisposable
         Assert.Equal(212_000, root.GetProperty("per_guest_approx").GetDecimal()); // 84.920.000 / 400 khách = 212.300 → 212.000
     }
 
+    [Fact]
+    public async Task Tool_FindBookings_ShowsHeldAndDeposited_FiltersByCustomerAndStatus()
+    {
+        using var db = NewDb();
+        var svc = Bookings(db);
+        await svc.HoldAsync(new HoldRequest(1, Day, Shift.Dinner, "Trần Quang Đức", "0911222333", 40, null));
+        var deposited = await svc.HoldAsync(new HoldRequest(2, Day, Shift.Lunch, "Lê Hoa", "0901234567", 30, null));
+        db.Bookings.Single(b => b.Id == deposited.Id).Status = BookingStatus.Deposited;
+        var expired = await svc.HoldAsync(new HoldRequest(3, Day.AddDays(1), Shift.Dinner, "Khách hết hạn", "0999", 20, null));
+        db.Bookings.Single(b => b.Id == expired.Id).HoldExpiresAt = _clock.Now.UtcDateTime.AddMinutes(-1);
+        await db.SaveChangesAsync();
+        var tools = Tools(db);
+
+        async Task<JsonElement> Find(string customer, string status)
+        {
+            var (json, isError) = await tools.ExecuteAsync("find_bookings",
+                Input(new { date_from = "2027-01-01", date_to = "2027-01-31", customer, status }));
+            Assert.False(isError);
+            return JsonDocument.Parse(json).RootElement;
+        }
+
+        var all = await Find("", "Any");
+        Assert.Equal(2, all.GetProperty("count").GetInt32()); // lượt giữ đã hết hạn không tính
+        var statuses = all.GetProperty("bookings").EnumerateArray().Select(b => b.GetProperty("status").GetString()).ToList();
+        Assert.Contains("Đã đặt cọc", statuses);
+        Assert.Contains("Đang giữ chỗ (chưa cọc)", statuses);
+
+        Assert.Equal("Trần Quang Đức", (await Find("quang đức", "Any")).GetProperty("bookings")[0].GetProperty("customer").GetString());
+        Assert.Equal("Lê Hoa", (await Find("0901 234", "Any")).GetProperty("bookings")[0].GetProperty("customer").GetString());
+        Assert.Equal(1, (await Find("", "Deposited")).GetProperty("count").GetInt32());
+        var held = (await Find("", "Held")).GetProperty("bookings")[0];
+        Assert.Equal("09:00 03/12/2026", held.GetProperty("hold_expires_at_local").GetString());
+    }
+
+    [Theory]
+    [InlineData("**Sảnh Kim Cương**: 60 bàn", "Sảnh Kim Cương: 60 bàn")]
+    [InlineData("* **Ca trưa:** còn trống\n* Ca tối: hết", "• Ca trưa: còn trống\n• Ca tối: hết")]
+    [InlineData("## Báo giá\n- Tổng: 83.376.000 đ", "Báo giá\n• Tổng: 83.376.000 đ")]
+    [InlineData("Giá 350.000 đ * 40 bàn", "Giá 350.000 đ * 40 bàn")] // phép nhân giữ nguyên
+    [InlineData("*nghiêng* và `mã`", "nghiêng và mã")]
+    public void PlainText_RemovesMarkdown(string input, string expected) =>
+        Assert.Equal(expected, PlainText.FromMarkdown(input));
+
     [Theory]
     [InlineData("find_available_halls", "{\"date_from\":\"2027-01-01\",\"date_to\":\"2027-03-01\",\"shift\":\"Any\",\"min_tables\":0}")] // quá 31 ngày
     [InlineData("estimate_quote", "{\"hall_id\":1,\"date\":\"2027-01-09\",\"shift\":\"Night\",\"tables\":40,\"menu_item_ids\":[1],\"services\":[]}")]

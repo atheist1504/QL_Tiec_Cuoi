@@ -22,6 +22,8 @@
             <Button Content="Thứ Bảy tuần sau còn sảnh nào cho 40 bàn?" Padding="8,2" Margin="0,0,6,6" Click="Suggestion_Click"/>
             <Button Content="Báo giá thử 35 bàn sảnh Hoàng Gia" Padding="8,2" Margin="0,0,6,6" Click="Suggestion_Click"/>
             <Button Content="Thực đơn có những món gì?" Padding="8,2" Margin="0,0,6,6" Click="Suggestion_Click"/>
+            <Button Content="2 tuần tới có những tiệc nào, đã cọc chưa?" Padding="8,2" Margin="0,0,6,6" Click="Suggestion_Click"/>
+            <Button Content="Lượt giữ chỗ nào sắp hết hạn?" Padding="8,2" Margin="0,0,6,6" Click="Suggestion_Click"/>
         </WrapPanel>
 
         <!-- Thao tác chờ xác nhận -->

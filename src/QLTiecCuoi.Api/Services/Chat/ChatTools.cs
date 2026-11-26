@@ -60,6 +60,23 @@ public class ChatTools(BookingService bookings, CatalogService catalog, QuoteSer
                 ["min_tables"] = Int("Số bàn khách cần; 0 nếu chưa biết"),
             },
             ["date_from", "date_to", "shift", "min_tables"], false),
+        new("find_bookings",
+            "Tra các lượt đặt sảnh đã có (đang giữ chỗ hoặc đã đặt cọc) trong khoảng ngày (tối đa 62 ngày), lọc theo tên hoặc số điện thoại khách. " +
+            "Trả về sảnh, ngày, ca, khách, số bàn, trạng thái, hạn giữ chỗ, hợp đồng và số tiền đã thu. " +
+            "Dùng khi hỏi ngày nào đã có tiệc, khách nào đã đặt, đã cọc chưa, lượt giữ nào sắp hết hạn.",
+            new()
+            {
+                ["date_from"] = Str("Ngày bắt đầu, dạng yyyy-MM-dd"),
+                ["date_to"] = Str("Ngày kết thúc, dạng yyyy-MM-dd"),
+                ["customer"] = Str("Một phần tên hoặc số điện thoại khách; chuỗi rỗng nếu không lọc theo khách"),
+                ["status"] = new
+                {
+                    type = "string",
+                    @enum = new[] { "Any", "Held", "Deposited" },
+                    description = "Any = tất cả, Held = đang giữ chỗ (chưa cọc), Deposited = đã đặt cọc",
+                },
+            },
+            ["date_from", "date_to", "customer", "status"], false),
         new("get_menu_and_services",
             "Lấy thực đơn đang bán (id, nhóm món, giá mỗi bàn) và dịch vụ (id, đơn vị, giá).",
             new(), [], false),
@@ -141,6 +158,7 @@ public class ChatTools(BookingService bookings, CatalogService catalog, QuoteSer
             {
                 "list_halls" => await bookings.GetHallsAsync(),
                 "find_available_halls" => await FindAvailableAsync(input),
+                "find_bookings" => await FindBookingsAsync(input),
                 "get_menu_and_services" => new
                 {
                     menu = (await catalog.GetMenuAsync(false)).Select(m => new { m.Id, m.Name, category = Labels.Of(m.Category), price_per_table = m.PricePerTable }),
@@ -190,6 +208,41 @@ public class ChatTools(BookingService bookings, CatalogService catalog, QuoteSer
             })
             .ToList();
         return new { count = free.Count, available = free.Take(60) };
+    }
+
+    private async Task<object> FindBookingsAsync(IReadOnlyDictionary<string, JsonElement> input)
+    {
+        BookingStatus? status = GetString(input, "status") switch
+        {
+            "Held" => BookingStatus.Held,
+            "Deposited" => BookingStatus.Deposited,
+            _ => null,
+        };
+        var customer = input.TryGetValue("customer", out var c) && c.ValueKind == JsonValueKind.String ? c.GetString() : null;
+        var list = await bookings.FindActiveAsync(GetDate(input, "date_from"), GetDate(input, "date_to"), customer, status);
+        var vi = CultureInfo.GetCultureInfo("vi-VN");
+        return new
+        {
+            count = list.Count,
+            bookings = list.Take(50).Select(r => new
+            {
+                booking_id = r.Booking.Id,
+                hall = r.Booking.Hall.Name,
+                date = r.Booking.EventDate.ToString("yyyy-MM-dd"),
+                weekday = vi.DateTimeFormat.GetDayName(r.Booking.EventDate.DayOfWeek),
+                shift = r.Booking.Shift.ToString(),
+                customer = r.Booking.CustomerName,
+                phone = r.Booking.CustomerPhone,
+                tables = r.Booking.ExpectedTables,
+                status = r.Booking.Status == BookingStatus.Deposited ? "Đã đặt cọc" : "Đang giữ chỗ (chưa cọc)",
+                hold_expires_at_local = r.Booking.Status == BookingStatus.Held && r.Booking.HoldExpiresAt is { } exp
+                    ? TimeZoneInfo.ConvertTimeFromUtc(DateTime.SpecifyKind(exp, DateTimeKind.Utc), clock.LocalTimeZone).ToString("HH:mm dd/MM/yyyy")
+                    : null,
+                contract = r.Contract is { } k
+                    ? new { code = k.Code, status = Labels.Of(k.Status), total = k.Payable, paid = r.Paid, remaining = k.Payable - r.Paid }
+                    : null,
+            }),
+        };
     }
 
     private async Task<object> HoldAsync(IReadOnlyDictionary<string, JsonElement> input)

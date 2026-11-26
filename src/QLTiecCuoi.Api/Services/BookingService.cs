@@ -20,6 +20,9 @@ public class BookingOptions
     public int MaxScheduleDays { get; set; } = 62;
 }
 
+/// <summary>Kết quả tra lượt đặt sảnh: lượt đặt, hợp đồng còn hiệu lực (nếu có) và số tiền đã thu.</summary>
+public record BookingSearchResult(Booking Booking, Contract? Contract, decimal Paid);
+
 public class BookingService(AppDbContext db, TimeProvider clock, BookingOptions options)
 {
     private DateTime Now => clock.GetUtcNow().UtcDateTime;
@@ -29,6 +32,47 @@ public class BookingService(AppDbContext db, TimeProvider clock, BookingOptions 
         await db.Halls.Where(h => h.IsActive).OrderBy(h => h.Id)
             .Select(h => new HallDto(h.Id, h.Name, h.MaxTables, h.BasePrice))
             .ToListAsync();
+
+    /// <summary>
+    /// Tìm các lượt đặt sảnh còn hiệu lực (đang giữ chỗ chưa hết hạn, hoặc đã cọc) trong khoảng ngày,
+    /// lọc theo tên hoặc số điện thoại khách. Kèm hợp đồng (nếu có) và số tiền đã thu.
+    /// </summary>
+    public async Task<List<BookingSearchResult>> FindActiveAsync(DateOnly from, DateOnly to, string? customer, BookingStatus? status)
+    {
+        if (to < from)
+            throw new AppException(ErrorKind.Validation, "Ngày kết thúc phải sau ngày bắt đầu.");
+        if (to.DayNumber - from.DayNumber + 1 > options.MaxScheduleDays)
+            throw new AppException(ErrorKind.Validation, $"Chỉ tra tối đa {options.MaxScheduleDays} ngày một lần.");
+
+        var now = Now;
+        var bookings = (await db.Bookings.Include(b => b.Hall)
+                .Where(b => b.EventDate >= from && b.EventDate <= to && b.Status != BookingStatus.Cancelled)
+                .OrderBy(b => b.EventDate).ThenBy(b => b.Shift).ThenBy(b => b.HallId)
+                .ToListAsync())
+            .Where(b => !IsExpiredHold(b, now))
+            .Where(b => status is null || b.Status == status)
+            .ToList();
+
+        var q = customer?.Trim();
+        if (!string.IsNullOrEmpty(q))
+        {
+            var digits = new string(q.Where(char.IsDigit).ToArray());
+            bookings = bookings.Where(b =>
+                    b.CustomerName.Contains(q, StringComparison.CurrentCultureIgnoreCase)
+                    || (digits.Length >= 3 && b.CustomerPhone.Contains(digits)))
+                .ToList();
+        }
+
+        var ids = bookings.Select(b => b.Id).ToList();
+        var contracts = await db.Contracts.Include(c => c.Payments)
+            .Where(c => ids.Contains(c.BookingId) && c.Status != ContractStatus.Cancelled)
+            .ToListAsync();
+        return bookings
+            .Select(b => contracts.FirstOrDefault(c => c.BookingId == b.Id) is { } c
+                ? new BookingSearchResult(b, c, c.Payments.Sum(p => p.Amount))
+                : new BookingSearchResult(b, null, 0))
+            .ToList();
+    }
 
     /// <summary>Lịch sảnh theo ca trong khoảng [from, to].</summary>
     public async Task<List<SlotDto>> GetScheduleAsync(DateOnly from, DateOnly to)

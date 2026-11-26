@@ -105,7 +105,8 @@ Với các model hỗ trợ (Opus, Sonnet 5.5, Fable), yêu cầu gửi kèm d�
 | `ConversationTtlMinutes` | 120 | Hội thoại bỏ không quá lâu thì bị xóa |
 | `AllowNoApiKey` | false | Bật khi dùng Ollama trên máy (không cần key) |
 
-Công cụ chatbot dùng: `list_halls`, `find_available_halls`, `get_menu_and_services`, `estimate_quote` (chỉ đọc, chạy ngay);
+Công cụ chatbot dùng: `list_halls`, `find_available_halls`, `find_bookings` (tra tiệc đã giữ chỗ / đã cọc theo ngày, tên hoặc số điện thoại khách),
+`get_menu_and_services`, `estimate_quote` (chỉ đọc, chạy ngay);
 `hold_hall`, `create_quote` (ghi dữ liệu, chỉ chạy khi nhân viên bấm **Xác nhận**). Mọi con số lấy từ API nghiệp vụ, chatbot không tự tính giá.
 
 ## Tài liệu quản lý dự án

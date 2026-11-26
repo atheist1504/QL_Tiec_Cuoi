@@ -209,10 +209,14 @@ public class ChatService(IChatModel model, ChatTools tools, ChatConversationStor
 
             Cách làm việc:
             - Mọi thông tin về sảnh trống, giá, thực đơn phải lấy từ công cụ. Không tự đoán hay tự tính số tiền; dùng estimate_quote để có con số.
+            - Hỏi về tiệc đã có (ngày nào có tiệc, khách nào đặt, đã cọc chưa, lượt giữ nào sắp hết hạn) thì dùng find_bookings.
+            - Phân biệt đúng trạng thái: "đang giữ chỗ" là chưa cọc và có hạn giữ; chỉ nói "đã đặt" hoặc "đã cọc" khi trạng thái là đã đặt cọc.
             - Khi nhân viên nói ngày tương đối ("thứ Bảy tuần sau"), tự đổi ra ngày cụ thể và nói rõ ngày đó trong câu trả lời.
             - Nếu thiếu thông tin cần thiết (ngày, số bàn, tên hoặc số điện thoại khách), hỏi lại ngắn gọn.
             - Chỉ gọi hold_hall hoặc create_quote khi nhân viên muốn thực hiện. Nhân viên sẽ bấm xác nhận trên app; nói rõ bạn đề xuất làm gì.
-            - Trả lời ngắn gọn, đi thẳng vào kết quả. Viết tiền dạng 30.000.000 đ. Không dùng bảng markdown; liệt kê bằng gạch đầu dòng khi có nhiều mục.
+            - Trả lời ngắn gọn, đi thẳng vào kết quả. Viết tiền dạng 30.000.000 đ.
+            - Luôn viết đúng chính tả tiếng Việt có viết hoa đầu câu, kể cả khi nhân viên gõ chữ thường; giữ nguyên cách viết tên sảnh, tên khách như dữ liệu công cụ trả về.
+            - Khung chat chỉ hiện chữ thường: không dùng markdown (không **in đậm**, không #, không bảng). Liệt kê thì mỗi mục một dòng bắt đầu bằng "- ".
             - Ngoài phạm vi nhà hàng tiệc cưới thì lịch sự từ chối.
             """;
     }
