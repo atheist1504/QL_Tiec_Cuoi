@@ -49,7 +49,7 @@ dotnet test
 - [x] Lịch sảnh theo ca (trưa, tối), giữ sảnh tạm 48 giờ, hủy giữ chỗ
 - [x] Chống trùng sảnh: kiểm tra ở service + chỉ mục UNIQUE `(HallId, EventDate, Shift)` cho lượt chưa hủy
 - [x] Danh mục thực đơn (giá theo bàn) và dịch vụ, thêm/sửa/ngừng bán
-- [x] Báo giá: tiền sảnh + thực đơn × số bàn + dịch vụ + VAT 10%, xem trước, lưu với giá tại thời điểm lập
+- [x] Báo giá: tiền sảnh + thực đơn × số bàn + dịch vụ + VAT 8% (đổi tại `Quote:VatPercent`), xem trước, lưu với giá tại thời điểm lập
 - [x] Xuất báo giá PDF
 - [x] Hợp đồng lập từ báo giá, ghi nhận đặt cọc (mặc định 30%), đủ cọc thì chốt sảnh; xuất hợp đồng PDF (QuestPDF)
 - [x] Thanh lý hợp đồng: tính lại theo số bàn thực tế + phát sinh, trừ tiền cọc, thu tiền cuối hoặc hoàn lại

@@ -7,7 +7,7 @@ namespace QLTiecCuoi.Api.Services;
 public class QuoteOptions
 {
     /// <summary>Thuế VAT (%) cộng vào tổng báo giá.</summary>
-    public decimal VatPercent { get; set; } = 10;
+    public decimal VatPercent { get; set; } = 8;
 
     /// <summary>Số ngày báo giá còn hiệu lực.</summary>
     public int ValidDays { get; set; } = 7;

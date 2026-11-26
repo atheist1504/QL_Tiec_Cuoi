@@ -54,6 +54,16 @@ public class QuoteServiceTests : IDisposable
     }
 
     [Fact]
+    public async Task DefaultVat_IsEightPercent()
+    {
+        using var db = NewDb();
+        var q = await new QuoteService(db, _clock, new QuoteOptions()).PreviewAsync(Req());
+        Assert.Equal(8, q.VatPercent);
+        Assert.Equal(6_176_000, q.VatAmount);   // 8% × 77.200.000
+        Assert.Equal(83_376_000, q.Total);
+    }
+
+    [Fact]
     public async Task Create_SavesQuoteWithValidity()
     {
         using var db = NewDb();
