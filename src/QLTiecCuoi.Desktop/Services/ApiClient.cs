@@ -1,3 +1,4 @@
+using System.IO;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Json;
@@ -24,14 +25,37 @@ public class ApiClient
 
     public ApiClient()
     {
-        // Đổi địa chỉ API bằng biến môi trường QLTC_API_URL khi triển khai.
-        var url = Environment.GetEnvironmentVariable("QLTC_API_URL") ?? "http://localhost:5100/";
+        var url = ResolveApiUrl();
         if (!url.EndsWith('/')) url += "/";
         // Chatbot có thể mất vài chục giây khi phải tra cứu nhiều bước.
         _http = new HttpClient { BaseAddress = new Uri(url), Timeout = TimeSpan.FromSeconds(120) };
     }
 
     public string BaseUrl => _http.BaseAddress!.ToString();
+
+    /// <summary>
+    /// Địa chỉ API, theo thứ tự ưu tiên: biến môi trường QLTC_API_URL, dòng đầu tiên (bỏ dòng trống
+    /// và dòng bắt đầu bằng #) của file api-url.txt cạnh file .exe, cuối cùng là http://localhost:5100/.
+    /// </summary>
+    public static string ResolveApiUrl()
+    {
+        var env = Environment.GetEnvironmentVariable("QLTC_API_URL");
+        if (!string.IsNullOrWhiteSpace(env)) return env.Trim();
+        try
+        {
+            var file = Path.Combine(AppContext.BaseDirectory, "api-url.txt");
+            if (File.Exists(file))
+            {
+                var line = File.ReadLines(file)
+                    .Select(l => l.Trim())
+                    .FirstOrDefault(l => l.Length > 0 && !l.StartsWith('#'));
+                if (line is not null && Uri.TryCreate(line, UriKind.Absolute, out _)) return line;
+            }
+        }
+        catch (IOException) { }
+        catch (UnauthorizedAccessException) { }
+        return "http://localhost:5100/";
+    }
 
     public Task<List<HallDto>> GetHallsAsync() => GetAsync<List<HallDto>>("api/halls");
 

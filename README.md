@@ -34,7 +34,12 @@ Mở cửa sổ PowerShell khác để chạy app desktop:
 dotnet run --project src/QLTiecCuoi.Desktop
 ```
 
-Đổi địa chỉ API của app desktop bằng biến môi trường `QLTC_API_URL`.
+App desktop lấy địa chỉ API theo thứ tự: biến môi trường `QLTC_API_URL`, rồi file `api-url.txt` cạnh file `.exe` (dòng đầu tiên không bắt đầu bằng `#`), cuối cùng là `http://localhost:5100/`. File `api-url.txt` trong repo đang trỏ tới máy chủ đã triển khai (mục **Triển khai**); khi chạy API trên máy mình thì đặt biến môi trường trước khi mở app:
+
+```powershell
+$env:QLTC_API_URL = "http://localhost:5100/"
+dotnet run --project src/QLTiecCuoi.Desktop
+```
 
 Ở môi trường Development, `appsettings.Development.json` bật `Contract:AllowLiquidationBeforeEvent` để demo được thanh lý trước ngày tiệc. Khi triển khai thật, tùy chọn này tắt: chỉ thanh lý từ ngày tổ chức trở đi.
 
@@ -109,6 +114,42 @@ Công cụ chatbot dùng: `list_halls`, `find_available_halls`, `find_bookings` 
 `get_menu_and_services`, `estimate_quote` (chỉ đọc, chạy ngay);
 `hold_hall`, `create_quote` (ghi dữ liệu, chỉ chạy khi nhân viên bấm **Xác nhận**). Mọi con số lấy từ API nghiệp vụ, chatbot không tự tính giá.
 
+## Triển khai (SmarterASP.NET)
+
+API và CSDL đang chạy ở gói dùng thử Windows 60 ngày của SmarterASP.NET (hết hạn **24/01/2027**):
+
+- API: https://shiroiarika-001-site1.jtempurl.com/ (Swagger ở `/swagger`, kiểm tra tình trạng ở `/api/health`)
+- CSDL: SQL Server 2022 `sql8011.site4now.net`, database `db_ad18cc_qltieccuoi`
+
+Tài khoản SmarterASP phải bật xác thực hai yếu tố, nếu không địa chỉ tạm `*.jtempurl.com` bị khóa bằng mật khẩu và app desktop không gọi được API.
+
+### Cấu hình trên máy chủ
+
+- `appsettings.Production.json` (có trong repo): `Database:MigrateOnStartup = true` (tự áp dụng migration khi khởi động, lỗi CSDL không làm sập API) và `Swagger:Enabled = true`. Môi trường Production không bật `Contract:AllowLiquidationBeforeEvent`.
+- `appsettings.Secrets.json` (**chỉ có trên máy chủ**, không commit, không nằm trong gói publish): chuỗi kết nối và key Gemini. Mẫu ở `src/QLTiecCuoi.Api/appsettings.Secrets.example.json`. Mật khẩu CSDL nên chỉ gồm chữ, số và `!` để khỏi phá chuỗi kết nối.
+
+### Cập nhật API lên máy chủ
+
+```powershell
+dotnet publish src/QLTiecCuoi.Api -c Release -o publish/api
+```
+
+1. Trong Bảng điều khiển → Trang web → site1 → **Tệp**, mở `/site1`, tạo file `app_offline.htm` (nội dung tùy ý) để tạm dừng API; nếu không, file `.dll` đang chạy bị khóa và upload báo lỗi.
+2. Xóa rồi upload lại các file đã đổi từ `publish/api` (thường chỉ `QLTiecCuoi.Api.dll`, `QLTiecCuoi.Shared.dll`). Thay nhiều file thì nén `publish/api` thành zip, upload rồi **Giải nén** vào `/site1`.
+3. Xóa `app_offline.htm`, mở `/api/health` kiểm tra: `secretsFileFound` và `canConnect` phải là `true`.
+
+Khi API báo *HTTP Error 500.30*, sửa `web.config` trên máy chủ thành `stdoutLogEnabled="true"`, tạo thư mục `logs`, mở lại trang rồi đọc file `logs/stdout_*.log`.
+
+Áp migration từ máy dev (không cần chờ máy chủ tự chạy), chuỗi kết nối nạp từ file bí mật qua biến môi trường để không gõ mật khẩu vào lệnh:
+
+```powershell
+$env:ConnectionStrings__Default = (Get-Content publish\appsettings.Secrets.json -Raw | ConvertFrom-Json).ConnectionStrings.Default
+dotnet ef database update --project src/QLTiecCuoi.Api
+Remove-Item Env:ConnectionStrings__Default
+```
+
+Phương án dự phòng khi hết hạn dùng thử: chạy API trên laptop và mở ra Internet bằng Cloudflare Tunnel (`cloudflared tunnel --url http://localhost:5100`), rồi sửa `api-url.txt` theo địa chỉ `trycloudflare.com` mới.
+
 ## Tài liệu quản lý dự án
 
 - `docs/pm/jira-backlog.csv`: backlog để nhập vào Jira (*Project settings → External system import → CSV*). Nhánh WBS cấp 1 là Epic, gói công việc là Task; `Original Estimate` tính bằng giây.
@@ -121,4 +162,4 @@ powershell -ExecutionPolicy Bypass -File docs\pm\export-wbs.ps1
 
 ## Bảo mật
 
-Không commit API key. Đặt khóa trong biến môi trường hoặc `dotnet user-secrets`.
+Không commit API key. Đặt khóa trong biến môi trường hoặc `dotnet user-secrets`; trên máy chủ đặt trong `appsettings.Secrets.json` (đã có trong `.gitignore`).

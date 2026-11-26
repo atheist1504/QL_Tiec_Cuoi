@@ -21,4 +21,9 @@
     <Resource Include="Assets\app.ico" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- Địa chỉ máy chủ API, sửa được bằng Notepad sau khi cài -->
+    <None Update="api-url.txt" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+
 </Project>

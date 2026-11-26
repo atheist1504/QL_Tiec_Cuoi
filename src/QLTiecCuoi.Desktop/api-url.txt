@@ -1,0 +1,5 @@
+# Dia chi may chu API cua app (dong dau tien khong bat dau bang #).
+# May chu da trien khai (SmarterASP.NET, dung thu den 24/01/2027): https://shiroiarika-001-site1.jtempurl.com/
+# May dev:  http://localhost:5100/
+# Bien moi truong QLTC_API_URL (neu co) duoc uu tien hon file nay.
+https://shiroiarika-001-site1.jtempurl.com/

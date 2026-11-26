@@ -19,6 +19,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- Bí mật chỉ tạo trên máy chủ; không đưa vào gói publish để khỏi ghi đè bản trên máy chủ. -->
+    <Content Update="appsettings.Secrets.json" CopyToPublishDirectory="Never" />
+    <Content Update="appsettings.Secrets.example.json" CopyToOutputDirectory="Never" CopyToPublishDirectory="Never" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\QLTiecCuoi.Shared\QLTiecCuoi.Shared.csproj" />
   </ItemGroup>
 

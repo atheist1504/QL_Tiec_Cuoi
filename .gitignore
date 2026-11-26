@@ -482,3 +482,7 @@ $RECYCLE.BIN/
 
 # Vim temporary swap files
 *.swp
+
+# Bí mật cấu hình trên máy chủ, gói publish
+appsettings.Secrets.json
+/publish/

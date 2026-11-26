@@ -8,6 +8,10 @@ using Anthropic;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Trên máy chủ hosting (SmarterASP.NET) không có user-secrets: chuỗi kết nối và API key nằm trong
+// file appsettings.Secrets.json tạo tay trên máy chủ. File này không có trong git và không bị publish ghi đè.
+builder.Configuration.AddJsonFile("appsettings.Secrets.json", optional: true, reloadOnChange: false);
+
 builder.Services.AddDbContext<AppDbContext>(o =>
     o.UseSqlServer(builder.Configuration.GetConnectionString("Default")));
 builder.Services.AddSingleton(TimeProvider.System);
@@ -61,18 +65,66 @@ builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
-if (app.Environment.IsDevelopment())
+// Swagger: luôn bật ở máy dev; trên máy chủ bật bằng cấu hình "Swagger:Enabled" = true để demo.
+if (app.Environment.IsDevelopment() || app.Configuration.GetValue<bool>("Swagger:Enabled"))
 {
     app.UseSwagger();
     app.UseSwaggerUI();
-    // Mở http://localhost:5100/ thì chuyển sang trang tài liệu API.
+    // Mở địa chỉ gốc thì chuyển sang trang tài liệu API.
     app.MapGet("/", () => Results.Redirect("/swagger")).ExcludeFromDescription();
+}
 
-    // Tự áp dụng migration khi chạy ở máy dev.
+// Migration: tự áp dụng ở máy dev; trên máy chủ bật bằng "Database:MigrateOnStartup" = true.
+if (app.Environment.IsDevelopment())
+{
     using var scope = app.Services.CreateScope();
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     if (db.Database.IsRelational()) db.Database.Migrate();
 }
+else if (app.Configuration.GetValue<bool>("Database:MigrateOnStartup"))
+{
+    // Trên máy chủ: lỗi CSDL không làm sập API, xem nguyên nhân ở /api/health.
+    try
+    {
+        using var scope = app.Services.CreateScope();
+        scope.ServiceProvider.GetRequiredService<AppDbContext>().Database.Migrate();
+    }
+    catch (Exception ex)
+    {
+        app.Logger.LogError(ex, "Không áp dụng được migration khi khởi động");
+    }
+}
+
+// Kiểm tra tình trạng máy chủ: có file bí mật không, kết nối CSDL được không, đã có key chatbot chưa.
+// Không trả về mật khẩu hay key.
+app.MapGet("/api/health", async (AppDbContext db, IConfiguration cfg, IWebHostEnvironment env) =>
+{
+    string? dbError = null;
+    var canConnect = false;
+    try
+    {
+        canConnect = await db.Database.CanConnectAsync();
+        if (!canConnect)
+        {
+            await db.Database.OpenConnectionAsync();
+            await db.Database.CloseConnectionAsync();
+        }
+    }
+    catch (Exception ex) { dbError = (ex.InnerException ?? ex).Message; }
+    var cs = new Microsoft.Data.SqlClient.SqlConnectionStringBuilder(cfg.GetConnectionString("Default") ?? "");
+    return Results.Ok(new
+    {
+        environment = env.EnvironmentName,
+        secretsFileFound = File.Exists(Path.Combine(env.ContentRootPath, "appsettings.Secrets.json")),
+        dbServer = cs.DataSource,
+        dbName = cs.InitialCatalog,
+        dbUser = cs.UserID,
+        canConnect,
+        dbError,
+        chatKeyConfigured = !string.IsNullOrWhiteSpace(cfg["Gemini:ApiKey"]) ||
+                            !string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("GEMINI_API_KEY")),
+    });
+}).ExcludeFromDescription();
 
 app.MapControllers();
 
