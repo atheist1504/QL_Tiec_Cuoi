@@ -65,6 +65,8 @@ if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
+    // Mở http://localhost:5100/ thì chuyển sang trang tài liệu API.
+    app.MapGet("/", () => Results.Redirect("/swagger")).ExcludeFromDescription();
 
     // Tự áp dụng migration khi chạy ở máy dev.
     using var scope = app.Services.CreateScope();
